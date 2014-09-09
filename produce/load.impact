@@ -1,0 +1,6 @@
+setmode -bs
+setcable -p auto
+identify
+assignfile -p 1 -file mm.bit
+program -p 1
+exit

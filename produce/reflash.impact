@@ -1,0 +1,7 @@
+setmode -bs
+setcable -p auto
+identify
+attachFlash -p 1 -spi W25Q80BV
+assignfiletoattachedflash -p 1 -file mm.mcs
+program -p 1 -dataWidth 4 -spionly -erase -loadfpga
+exit

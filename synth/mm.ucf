@@ -1,0 +1,43 @@
+# Global controls
+NET "ex_clk_i" LOC = J16;
+NET "ex_clk_o" LOC = F4;
+
+#NET "INT" LOC = R7;
+
+# UART
+NET "uartSIN"  LOC = K15;
+NET "uartSOUT" LOC = L14;
+NET "uartSOUT" PULLUP;
+
+# UART debug
+NET "uart_debugSIN" LOC = L16;
+NET "uart_debugSOUT" LOC = M13;
+NET "uart_debugSOUT" PULLUP;
+
+NET "w5500_spi_MISO_MASTER" LOC = E15;
+NET "w5500_spi_MOSI_MASTER" LOC = K16;
+NET "w5500_spi_SS_N_MASTER" LOC = D16;
+NET "w5500_spi_SCLK_MASTER" LOC = H16;
+NET "w5500_spi_RESET" LOC = E16;
+NET "w5500_INT" LOC = J14;
+
+# SPI Flash: W25Q80BV
+#NET "POWER_ON" LOC = T3 | SLEW = QUIETIO;
+
+#NET "*" IOSTANDARD = LVCMOS33;
+
+#LED
+#NET "LED[0]" LOC = F4; 
+#NET "LED[1]" LOC = F5;
+#NET "LED[2]" LOC = F6;
+#NET "LED[3]" LOC = F7;
+#NET "LED[4]" LOC = B15;
+#NET "LED[5]" LOC = B16;
+#NET "LED[6]" LOC = C15;
+#NET "LED[7]" LOC = C16;
+
+NET "ex_clk_i" TNM_NET = "ex_clk_i";
+TIMESPEC TS_clk = PERIOD "ex_clk_i" 40 ns HIGH 50 %;
+
+NET "clk_i" TNM_NET = "clk_i";
+TIMESPEC TS_clk_i = PERIOD "clk_i" 10 ns HIGH 50 %;
