@@ -115,69 +115,13 @@ int main(int argv,char * * argc)
 		if(RIP[0]!=0 && RIP[1]!=0 && RIP[2]!=0 && RIP[3]!=0)
 			break;
 	}
-	
-	// while(1)
-   // {
-      // switch(getSn_SR(SOCK_STRATUM))/*获取socket0的状态*/
-      // {
-         // case SOCK_INIT:/*socket初始化完成*/
-           // connect(SOCK_STRATUM, RIP ,3333);/*在TCP模式下向服务器发送连接请求*/
-           // debug32("SOCK_INIT\n");
-           // break;
-         // case SOCK_ESTABLISHED:/*socket连接建立*/
-           // if(getSn_IR(SOCK_STRATUM) & Sn_IR_CON)
-           // {
-              // setSn_IR(SOCK_STRATUM, Sn_IR_CON);/*Sn_IR的第0位置1*/
-            //}
-			// memcpy(buffer,"{\"id\": 1, \"method\": \"mining.subscribe\", \"params\": []}\n",100);
-			// send(SOCK_STRATUM,buffer,60,(bool)0);/*W5200向Server发送数据*/
-           // len=getSn_RX_RSR(SOCK_STRATUM);/*len为已接收数据的大小*/
-           // if(len>0)
-           // {
-              // recv(SOCK_STRATUM,buffer,len);/*W5200接收来自Sever的数据*/
-			  // debug32("%s",buffer);
-            // }
-			
-           // break;
-         // case SOCK_CLOSE_WAIT:/*socket等待关闭状态*/
-           // debug32("SOCK_CLOSE_WAIT\n");
-		   // break;
-         // case SOCK_CLOSED:/*socket关闭*/
-		   // debug32("SOCK_CLOSED\n");
-           // socket(SOCK_STRATUM,Sn_MR_TCP,anyport++,Sn_MR_ND);/*打开socket0的一个端口*/
-           // break;
-     // }
-   // }
    
-    connect_poll(RIP,3333);
-	send_subscribe();
-	send_authorize();
-	while(1)
-		recv_stratum(&g_mm_works[0]);
-	//while(!recv_stratum());
-	
+    // connect_poll(RIP,3333);
+	// send_subscribe();
+	// send_authorize();
 	// while(1)
-		// recv_stratum();
-	
-	//char *js = "{\"id\": 1, \"method\": \"mining.notify\", \"params\": [\"name\":\"hyper\"],\"params\": [\"name\":null]}";
-	// char o[128];
-	// jsmn_parser jp;
-	// jsmntok_t jt[32];
-	// jsmnerr_t je;
-	
-	// debug32("strlen:%d\n",strlen(js));
-	// jsmn_init(&jp);
-	// int IDX = 0;
-	// je = jsmn_parse(&jp,js,strlen(js),jt, 32);
-	// while(1){	
-		// if(IDX > je) break;
-		// memset(o,0,128);
-		// memcpy(o,js+jt[IDX].start,jt[IDX].end-jt[IDX].start);
-		// debug32("err:%d start:%d end:%d size:%d type:%d value:%s\n ",je,jt[IDX].start,jt[IDX].end,jt[IDX].size,jt[IDX].type,o);
-		// IDX++;
-	// }
-	//parse_stratum(js);
-	//debug32("done");
+		// recv_stratum(&g_mm_works[0]);
+
 	return 0;
 }
 
