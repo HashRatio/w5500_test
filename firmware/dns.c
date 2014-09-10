@@ -9,13 +9,15 @@
 #include "sockutil.h"
 #include "defines.h"
 
-uint8 DNS_GET_IP[4];
-uint16 MSG_ID = 0x1122;
 uint8 BUFPUB[1024];
-//CONFIG_MSG ConfigMsg;
-uint8 DEFAULT_DNS[4] = {192,168,2,1};
-//uint8 DEFAULT_DNS[4] = {192,168,2,108};
-//uint8 DEFAULT_DNS[4] = {8,8,8,8};
+
+static uint8 DNS_GET_IP[4];
+uint16 MSG_ID = 0;
+//uint8 DEFAULT_DNS[4] = {192,168,2,1};
+
+static uint8 dns_retry_cnt=0;
+static uint8 dns_ok=0;
+	
 /*
 ********************************************************************************
 *              MAKE DNS QUERY MESSAGE
@@ -369,7 +371,7 @@ uint8 parseMSG(struct dhdr * pdhdr, uint8 * pbuf)
 * Note        :
 ********************************************************************************
 */
-uint8 dns_query(uint8 s, uint8 * name)
+uint8 dns_query(uint8 * dns_ip, uint8 s, uint8 * name)
 {
   static uint32 dns_wait_time = 0;
   struct dhdr dhp;
@@ -407,7 +409,7 @@ uint8 dns_query(uint8 s, uint8 * name)
 		len = dns_makequery(0, name, BUFPUB, MAX_DNS_BUF_SIZE);
 		uint8 str[32];
 		memcpy(str,BUFPUB,31);
-		sendto(s, BUFPUB, len, DEFAULT_DNS, IPPORT_DOMAIN);
+		sendto(s, BUFPUB, len, dns_ip, IPPORT_DOMAIN);
 		break;         
   }
   return DNS_RET_PROGRESS;
@@ -435,4 +437,40 @@ void init_dns_client(void)
   sysinit(txsize, rxsize);
   
   //sprintf((char*)ConfigMsg.domain,"%s","www.baidu.com"); 
+}
+
+int32 do_dns(uint8 * dns_ip,uint8 * domain,uint8 * ip)
+{
+	while(1)
+	{ 
+		if( (dns_ok==1) ||  (dns_retry_cnt > DNS_RETRY))
+		{
+			return 0;
+		}
+
+		else if(memcmp(dns_ip,"\x00\x00\x00\x00",4))
+		{
+			switch(dns_query(dns_ip, SOCK_DNS,domain))
+			{
+			  case DNS_RET_SUCCESS:
+				dns_ok=1;
+				memcpy(ip,DNS_GET_IP,4);
+				dns_retry_cnt=0;
+				debug32("Get [%s]'s IP address [%d.%d.%d.%d] from %d.%d.%d.%d\r\n",domain,ip[0],ip[1],ip[2],ip[3],dns_ip[0],dns_ip[1],dns_ip[2],dns_ip[3]);
+				break;
+			  case DNS_RET_FAIL:
+				dns_ok=0;
+				dns_retry_cnt++;
+				debug32("Fail! Please check your network configuration or DNS server.\r\n");
+				break;
+			  default:
+				break;
+			}
+		}
+		else
+			debug32("Invaild DNS server.\n");
+		if(ip[0]!=0 && ip[1]!=0 && ip[2]!=0 && ip[3]!=0)
+			break;
+	}
+	return 0;
 }

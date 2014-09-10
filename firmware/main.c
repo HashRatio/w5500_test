@@ -44,10 +44,10 @@ uint8 ip[4]={192,168,2,200};/*定义Ip变量*/
 uint8 sn[4]={255,255,255,0};/*定义Subnet变量*/
 uint8 gw[4]={192,168,2,1};/*定义Gateway变量*/
 uint8 dip[4]={192,168,2,116};
-//uint8 DEFAULT_DNS[4] = {192,168,2,1};
+uint8 DEFAULT_DNS[4] = {192,168,2,1};
 uint8 RIP[4];
 uint8 DOMAIN[] = "stratum.f2pool.com";
-int8 a[BUFFER_SIZE];
+//int8 a[BUFFER_SIZE];
 
 void W5500_Init(void)
 {
@@ -61,8 +61,6 @@ void W5500_Init(void)
 
 int main(int argv,char * * argc)
 {	
-	//int32 len;
-	//uint16 anyport=30000;
 	
 	irq_setmask(0);
 	irq_enable(1);
@@ -81,42 +79,12 @@ int main(int argv,char * * argc)
 	setRCR(3);/*设置最大重新发送次数*/
 	sysinit(txsize, rxsize);/*初始化8个socket*/
 	
-	uint8 dns_retry_cnt=0;
-	uint8 dns_ok=0;
 	curr_mm_work = g_mm_works;
-	while(1)
-	{ 
-		if( (dns_ok==1) ||  (dns_retry_cnt > DNS_RETRY))
-		{
-			return 0;
-		}
-
-		else if(memcmp(DEFAULT_DNS,"\x00\x00\x00\x00",4))
-		{
-			switch(dns_query(SOCK_DNS,DOMAIN))
-			{
-			  case DNS_RET_SUCCESS:
-				dns_ok=1;
-				memcpy(RIP,DNS_GET_IP,4);
-				dns_retry_cnt=0;
-				debug32("Get [%s]'s IP address [%d.%d.%d.%d] from %d.%d.%d.%d\r\n",DOMAIN,RIP[0],RIP[1],RIP[2],RIP[3],DEFAULT_DNS[0],DEFAULT_DNS[1],DEFAULT_DNS[2],DEFAULT_DNS[3]);
-				break;
-			  case DNS_RET_FAIL:
-				dns_ok=0;
-				dns_retry_cnt++;
-				debug32("Fail! Please check your network configuration or DNS server.\r\n");
-				break;
-			  default:
-				break;
-			}
-		}
-		else
-			debug32("Invaild DNS server.\n");
-		if(RIP[0]!=0 && RIP[1]!=0 && RIP[2]!=0 && RIP[3]!=0)
-			break;
-	}
-   
-    // connect_poll(RIP,3333);
+	
+	do_dns(DEFAULT_DNS,DOMAIN,RIP);
+	
+    connect_poll(RIP,3333);
+	
 	// send_subscribe();
 	// send_authorize();
 	// while(1)
