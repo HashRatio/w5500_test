@@ -56,7 +56,11 @@ typedef struct mm_work {
 	uint8	target[32];
 } mm_work;
 
-extern mm_work g_mm_worksf[1];
+extern mm_work * curr_mm_work;
+extern mm_work g_mm_works[2];
+extern uint32 nonce1_bin;
+extern int8 nonce1_str[9];
+
 void miner_init_work(struct mm_work *mw, struct work *work);
 void miner_gen_nonce2_work(struct mm_work *mw, uint32 nonce2, struct work *work);
 //int test_nonce(struct mm_work *mw, struct result *ret);

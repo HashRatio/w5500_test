@@ -38,7 +38,7 @@
 #define IDLE_TIME	60	/* Seconds */
 
 #define CH 0
-uint8 buffer[2048];/*定义一个2KB的缓存*/
+//uint8 buffer[];/*定义一个2KB的缓存*/
 uint8 mac[6]={0x00,0x08,0xDC,0x01,0x02,0x03};/*定义Mac变量*/
 uint8 ip[4]={192,168,2,200};/*定义Ip变量*/
 uint8 sn[4]={255,255,255,0};/*定义Subnet变量*/
@@ -47,6 +47,8 @@ uint8 dip[4]={192,168,2,116};
 //uint8 DEFAULT_DNS[4] = {192,168,2,1};
 uint8 RIP[4];
 uint8 DOMAIN[] = "stratum.f2pool.com";
+int8 a[BUFFER_SIZE];
+
 void W5500_Init(void)
 {
 	iinchip_hw_init();
@@ -81,6 +83,7 @@ int main(int argv,char * * argc)
 	
 	uint8 dns_retry_cnt=0;
 	uint8 dns_ok=0;
+	curr_mm_work = g_mm_works;
 	while(1)
 	{ 
 		if( (dns_ok==1) ||  (dns_retry_cnt > DNS_RETRY))
@@ -150,13 +153,13 @@ int main(int argv,char * * argc)
 	send_subscribe();
 	send_authorize();
 	while(1)
-		recv_stratum();
+		recv_stratum(&g_mm_works[0]);
 	//while(!recv_stratum());
 	
 	// while(1)
 		// recv_stratum();
 	
-	char *js = "{\"id\": 1, \"method\": \"mining.notify\", \"params\": [\"name\":\"hyper\"],\"params\": [\"name\":null]}";
+	//char *js = "{\"id\": 1, \"method\": \"mining.notify\", \"params\": [\"name\":\"hyper\"],\"params\": [\"name\":null]}";
 	// char o[128];
 	// jsmn_parser jp;
 	// jsmntok_t jt[32];
@@ -173,8 +176,8 @@ int main(int argv,char * * argc)
 		// debug32("err:%d start:%d end:%d size:%d type:%d value:%s\n ",je,jt[IDX].start,jt[IDX].end,jt[IDX].size,jt[IDX].type,o);
 		// IDX++;
 	// }
-	parse_stratum(js);
-	debug32("done");
+	//parse_stratum(js);
+	//debug32("done");
 	return 0;
 }
 

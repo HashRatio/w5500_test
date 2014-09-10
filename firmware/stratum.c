@@ -8,8 +8,9 @@
 #include "stratum.h"
 #include "jsmn.h"
 #include "miner.h"
+#include "utils.h"
 
-#define BUFFER_SIZE 2048
+
 static jsmn_parser jp;
 static jsmntok_t jt[TOKEN_BUFFER];
 static jsmnerr_t je;
@@ -24,11 +25,18 @@ int32 flag_diff;
 int32 flag_notify;
 
 int32 current_diff;
+int32 authorize_id;
+int32 subscribe_id;
+int32 submit_id;
+
 struct pool_task{
 	
 };
 
-mm_work g_mm_works[1];
+mm_work * curr_mm_work;
+mm_work g_mm_works[2];
+int8 nonce1_str[9];
+uint32 nonce1_bin;
 
 int32 connect_poll(uint8 * addr, uint16 port)
 {
@@ -66,6 +74,7 @@ int32 send_subscribe()
         setSn_IR(SOCK_STRATUM, Sn_IR_CON);/*Sn_IR的第0位置1*/
     }
 	send(SOCK_STRATUM,(uint8*)buffer,strlen(buffer),0);
+	subscribe_id = pkg_id;
 	return 0;
 }
 
@@ -80,11 +89,13 @@ int32 send_authorize()
         setSn_IR(SOCK_STRATUM, Sn_IR_CON);/*Sn_IR的第0位置1*/
     }
 	send(SOCK_STRATUM,(uint8*)buffer,strlen(buffer),0);
+	authorize_id = pkg_id;
 	return 0;
 }
 
 int32 send_submit()
 {
+	submit_id = pkg_id;
 	return 0;
 }
 
@@ -92,6 +103,7 @@ int32 recv_stratum()
 {
     int32 len;
 	int32 json_len;
+	//memset(buffer,0,BUFFER_SIZE);
 	//int32 end = 0;
 	// switch(getSn_SR(SOCK_STRATUM))/*获取socket0的状态*/
     // {
@@ -186,7 +198,7 @@ int32 parse_nofify(const int8 * json)
 		idx++;
 	}
 	/*job_id*/
-	memcpy(g_mm_works[0].job_id,json+jt[idx].start,jt[idx].end-jt[idx].start);
+	memcpy(curr_mm_work->job_id,json+jt[idx].start,jt[idx].end-jt[idx].start);
 	debug32("job_id:%s\n",g_mm_works[0].job_id);
 	idx++;
 	
@@ -203,13 +215,13 @@ int32 parse_nofify(const int8 * json)
 	idx+=jt[idx].size+1;
 	
 	/*version*/
-	memcpy(g_mm_works[0].header,json+jt[idx].start,jt[idx].end-jt[idx].start);
-	debug32("version:%s\n",g_mm_works[0].header);
+	memcpy(curr_mm_work->header,json+jt[idx].start,jt[idx].end-jt[idx].start);
+	debug32("version:%s\n",curr_mm_work->header);
 	idx++;
 	
 	/*nbits*/
-	memcpy(g_mm_works[0].target,json+jt[idx].start,jt[idx].end-jt[idx].start);
-	debug32("nbits:%s\n",g_mm_works[0].target);
+	memcpy(curr_mm_work->target,json+jt[idx].start,jt[idx].end-jt[idx].start);
+	debug32("nbits:%s\n",curr_mm_work->target);
 	idx++;
 	
 	
@@ -225,26 +237,29 @@ int32 parse_diff(const int8 * json)
 
 int32 parse_result(const int8 * json)
 {
-	debug32("result\n");
+	// int idx = 0;
+	// jsmn_init(&jp);
+	// je = jsmn_parse(&jp,json,strlen(json),jt, TOKEN_BUFFER);
 	return 0;
 }
 
 int32 parse_stratum(const int8 * json)
 {
-	int idx = 0;
-
+	int32 idx = 0;
+	int32 i;
+	int32 recv_pkg_id = 0;
 	jsmn_init(&jp);
 	je = jsmn_parse(&jp,json,strlen(json),jt, TOKEN_BUFFER);
 	
-	while(1){
+/*  	while(1){
 		if(idx >= je)
 			break;
 		//memset(buffer,0,BUFFER_SIZE);
-		//memcpy(buffer,json+jt[idx].start,jt[idx].end-jt[idx].start);
-		//buffer[jt[idx].end= = '\0';
-		//debug32("idx:%d err:%d start:%d end:%d size:%d type:%d\n",idx,je,jt[idx].start,jt[idx].end,jt[idx].size,jt[idx].type);
+		memcpy(buffer,json+jt[idx].start,jt[idx].end-jt[idx].start);
+		//buffer[jt[idx].end] = '\0';
+		debug32("idx:%d err:%d start:%d end:%d size:%d type:%d\n",idx,je,jt[idx].start,jt[idx].end,jt[idx].size,jt[idx].type);
 		idx++;
-	}
+	}  */
 	
 	idx=0;
 	while(1){	
@@ -255,12 +270,37 @@ int32 parse_stratum(const int8 * json)
 				return parse_nofify(json);
 			if(strncmp(json+jt[idx+1].start,"mining.diff",11) == 0)
 				return parse_diff(json);
-		}	
-		if(strncmp(json+jt[idx].start,"result",6) == 0)
-			return parse_result(json);
+		}
+		if((strncmp(json+jt[idx].start,"id",2) == 0)&&(strncmp(json+jt[idx+1].start,"n",1) != 0)){
+			for(i=jt[idx+1].start;i<jt[idx+1].end;i++){
+				recv_pkg_id = recv_pkg_id*10 + (json[i]-0x30);
+			}
+			break;
+		}
 		idx++;
 	}
 	
+	idx=0;
+	while(1){
+		if(idx >= je)
+			return -1;
+		if(strncmp(json+jt[idx].start,"result",6) == 0){
+			if(recv_pkg_id == authorize_id){
+				debug32("authorize\n");
+			}
+			else if(recv_pkg_id == subscribe_id){
+				memcpy(nonce1_str,json+jt[idx+9].start,8);
+				nonce1_bin = ATOI32(nonce1_str,16);
+				debug32("subscribe:nonce1:%s %x\n",nonce1_str,nonce1_bin);
+				break;
+			}
+			else if(recv_pkg_id == submit_id){
+				
+			}
+			break;
+		}
+		idx++;
+	}
 	return 0;
 }
 
