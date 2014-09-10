@@ -12,10 +12,10 @@
 #define DEBUG 1
 #ifdef DEBUG
 
-//void hexdump(const uint8 * p, unsigned int len);
-
+#include "types.h"
 #include "uart.h"
-char printf_buf32[32];
+void hexdump(const uint8 * p, unsigned int len);
+char printf_buf32[2048];
 #define debug32(...)	do {				\
 		m_sprintf(printf_buf32, __VA_ARGS__);	\
 		uart1_puts(printf_buf32);		\

@@ -33,13 +33,14 @@
 #include "dns.h"
 #include "jsmn.h"
 #include "stratum.h"
+#include "pub_var.h"
 
 #define MM_BUF_NUM  3
 #define IDLE_TIME	60	/* Seconds */
 
 #define CH 0
 
-//uint8 buffer[];/*定义一个2KB的缓存*/
+//int8 buffer[BUFFER_SIZE];/*定义一个2KB的缓存*/
 uint8 mac[6]={0x00,0x08,0xDC,0x01,0x02,0x03};/*定义Mac变量*/
 uint8 ip[4]={192,168,2,200};/*定义Ip变量*/
 uint8 sn[4]={255,255,255,0};/*定义Subnet变量*/
@@ -47,8 +48,7 @@ uint8 gw[4]={192,168,2,1};/*定义Gateway变量*/
 uint8 dip[4]={192,168,2,116};
 uint8 DEFAULT_DNS[4] = {192,168,2,1};
 uint8 RIP[4];
-uint8 DOMAIN[] = "stratum.f2pool.com";
-//int8 a[40];
+uint8 DOMAIN[] = "us1.ghash.io";
 
 void W5500_Init(void)
 {
@@ -80,13 +80,12 @@ int main(int argv,char * * argc)
 	setRCR(3);/*设置最大重新发送次数*/
 	sysinit(txsize, rxsize);/*初始化8个socket*/
 	
-	curr_mm_work = g_mm_works;
+	mm_work_ptr = &g_mm_works[0];
 	
 	if(do_dns(DEFAULT_DNS,DOMAIN,RIP))
 		debug32("parse ok.\n");
 	else
 		debug32("parse failed.\n");
-	
     connect_poll(RIP,3333);
 	send_subscribe();
 	send_authorize();

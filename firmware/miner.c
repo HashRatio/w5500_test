@@ -19,6 +19,9 @@
 #include "sha256.h"
 #include "twipwm.h"
 
+mm_work * mm_work_ptr;
+mm_work g_mm_works[2];
+
 static inline void flip32(void *dest_p, const void *src_p)
 {
 	uint32_t *dest = dest_p;

@@ -257,7 +257,7 @@ uint16 recv(SOCKET s, uint8 * buf, uint16 len)
 #ifdef __DEF_IINCHIP_DBG__
 	debug32("recv()\r\n");
 #endif
-	debug32("recv_from. len:%d\n",len);
+	//debug32("recv_from. len:%d\n",len);
 	if ( len > 0 )
 	{
 		recv_data_processing(s, buf, len);

@@ -2,6 +2,7 @@
 #define _UTILS_H
 
 #include "types.h"
+
 void delay(unsigned int ms);
 void delay_us(unsigned int us);
 extern uint16 ATOI(char* str,uint16 base);

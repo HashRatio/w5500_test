@@ -1,7 +1,6 @@
 #ifndef _STRATUM_H_
 #define _STRATUM_H_
 #include "types.h"
-#include "miner.h"
 
 #define TOKEN_BUFFER 64
 
@@ -9,9 +8,6 @@
 #define P_MINING_AUTHORIZE 0x02
 #define P_MINING_SUBMIT 0x03
 
-#define BUFFER_SIZE 2048
-
-//extern int8 buffer[BUFFER_SIZE];
 extern int32 authorize_id;
 extern int32 subscribe_id;
 extern int32 submit_id;

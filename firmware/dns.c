@@ -8,13 +8,11 @@
 #include "dns.h"
 #include "sockutil.h"
 #include "defines.h"
-
-uint8 BUFPUB[1024];
+#include "pub_var.h"
+#include "miner.h"
 
 static uint8 DNS_GET_IP[4];
 uint16 MSG_ID = 0;
-//uint8 DEFAULT_DNS[4] = {192,168,2,1};
-
 static uint8 dns_retry_cnt=0;
 static uint8 dns_ok=0;
 	
@@ -383,8 +381,8 @@ uint8 dns_query(uint8 * dns_ip, uint8 s, uint8 * name)
       if ((len = getSn_RX_RSR(s)) > 0)
       {
         if (len > MAX_DNS_BUF_SIZE) len = MAX_DNS_BUF_SIZE;
-        len = recvfrom(s, BUFPUB, len, ip, &port);
-        if(parseMSG(&dhp, BUFPUB))
+        len = recvfrom(s, (uint8*)buffer, len, ip, &port);
+        if(parseMSG(&dhp, (uint8*)buffer))
         {
           close(s);
           return DNS_RET_SUCCESS;
@@ -406,10 +404,10 @@ uint8 dns_query(uint8 * dns_ip, uint8 s, uint8 * name)
     case SOCK_CLOSED:
 		dns_wait_time = 0;
 		socket(s, Sn_MR_UDP, 3000, 0);
-		len = dns_makequery(0, name, BUFPUB, MAX_DNS_BUF_SIZE);
+		len = dns_makequery(0, name, (uint8*)buffer, MAX_DNS_BUF_SIZE);
 		uint8 str[32];
-		memcpy(str,BUFPUB,31);
-		sendto(s, BUFPUB, len, dns_ip, IPPORT_DOMAIN);
+		memcpy(str,(uint8*)buffer,31);
+		sendto(s, (uint8*)buffer, len, dns_ip, IPPORT_DOMAIN);
 		break;         
   }
   return DNS_RET_PROGRESS;
@@ -450,7 +448,7 @@ int32 do_dns(uint8 * dns_ip,uint8 * domain,uint8 * ip)
 			return 0;
 
 		if(memcmp(dns_ip,"\x00\x00\x00\x00",4))
-		{
+		{	
 			switch(dns_query(dns_ip, SOCK_DNS,domain))
 			{
 			  case DNS_RET_SUCCESS:

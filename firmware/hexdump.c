@@ -28,7 +28,7 @@ static char nibble[] = {
 	'8', '9', 'a', 'b', 'c', 'd', 'e', 'f' };
 
 #define BYTES_PER_LINE 0x10
-
+#include "defines.h"
 void hexdump(const uint8_t *p, unsigned int len)
 {
 	unsigned int i, addr;

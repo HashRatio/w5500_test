@@ -35,7 +35,7 @@ typedef struct result {
 } result;
 
 typedef struct mm_work {
-	uint8 job_id[16];
+	uint8 job_id[20];
 
 	size_t coinbase_len;
 	uint8 coinbase[HRTO_P_COINBASE_SIZE];
@@ -56,8 +56,8 @@ typedef struct mm_work {
 	uint8	target[32];
 } mm_work;
 
-extern mm_work * curr_mm_work;
-extern mm_work g_mm_works[2];
+extern mm_work * mm_work_ptr;
+extern mm_work g_mm_works[];
 extern uint32 nonce1_bin;
 extern int8 nonce1_str[9];
 

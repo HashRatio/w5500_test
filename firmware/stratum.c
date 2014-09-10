@@ -9,12 +9,11 @@
 #include "jsmn.h"
 #include "miner.h"
 #include "utils.h"
-
+#include "pub_var.h"
 
 static jsmn_parser jp;
 static jsmntok_t jt[TOKEN_BUFFER];
 static jsmnerr_t je;
-static int8 buffer[BUFFER_SIZE];
 static int32 pkg_id = 0;
 
 static int32 json_begin = 0;
@@ -29,12 +28,12 @@ int32 authorize_id;
 int32 subscribe_id;
 int32 submit_id;
 
+int8 buffer[2048];
+
 struct pool_task{
 	
 };
 
-mm_work * curr_mm_work;
-mm_work g_mm_works[2];
 int8 nonce1_str[9];
 uint32 nonce1_bin;
 
@@ -70,13 +69,17 @@ int32 send_subscribe()
 	pkg_id++;
 	memset(buffer,0,BUFFER_SIZE);
 	m_sprintf(buffer,"{\"id\": %d, \"method\": \"mining.subscribe\", \"params\": [\"hashratio miner\"]}\n", pkg_id);
-	debug32("%s",buffer);
+	//debug32("%s",buffer);
+	//debug32("0x%08x\n",buffer);
 	if(getSn_IR(SOCK_STRATUM) & Sn_IR_CON)
     {
         setSn_IR(SOCK_STRATUM, Sn_IR_CON);/*Sn_IR的第0位置1*/
     }
+	//hexdump((const uint8 *)buffer,2048);
 	send(SOCK_STRATUM,(uint8*)buffer,strlen(buffer),0);
 	subscribe_id = pkg_id;
+	//debug32("0x%08x\n",buffer);
+	//hexdump((const uint8 *)buffer,2048);
 	return 0;
 }
 
@@ -85,13 +88,17 @@ int32 send_authorize()
 	pkg_id++;
 	memset(buffer,0,BUFFER_SIZE);
 	m_sprintf(buffer,"{\"params\": [\"whb.miner1\", \"password\"], \"id\": %d, \"method\": \"mining.authorize\"}\n", pkg_id);
-	debug32("%s",buffer);
+	//debug32("%s",buffer);
 	if(getSn_IR(SOCK_STRATUM) & Sn_IR_CON)
     {
         setSn_IR(SOCK_STRATUM, Sn_IR_CON);/*Sn_IR的第0位置1*/
     }
+	//debug32("send start.\n");
+	//hexdump((const uint8 *)buffer,2048);
 	send(SOCK_STRATUM,(uint8*)buffer,strlen(buffer),0);
+	//debug32("send ok.\n");
 	authorize_id = pkg_id;
+	//hexdump((const uint8 *)buffer,2048);
 	return 0;
 }
 
@@ -105,7 +112,7 @@ int32 recv_stratum()
 {
     int32 len;
 	int32 json_len;
-	//memset(buffer,0,BUFFER_SIZE);
+	
 	//int32 end = 0;
 	// switch(getSn_SR(SOCK_STRATUM))/*获取socket0的状态*/
     // {
@@ -127,6 +134,7 @@ int32 recv_stratum()
     if(len>0){
 		//debug32("\n******************recv_stratum***json_end:%d******************\n",json_end);	
         recv(SOCK_STRATUM,(uint8*)buffer+json_end,len);/*W5200接收来自Sever的数据*/
+		//hexdump((const uint8 *)buffer,2048);
 		len+=json_end;
 		json_begin = json_end = 0;
 		while(1){
@@ -166,6 +174,9 @@ int32 recv_stratum()
 int32 parse_nofify(const int8 * json)
 {
 	int32 idx = 0;
+	int32 len;
+	int32 i;
+	
 	notify_cnt++;
 	debug32("parse_notify:%d\n",notify_cnt);
 /* 	uint8 job_id[4];
@@ -187,6 +198,7 @@ int32 parse_nofify(const int8 * json)
 	uint32 pool_no;
 
 	uint8	target[32]; */
+	
 	while(1){
 		if(idx >= je)
 			break;
@@ -200,15 +212,19 @@ int32 parse_nofify(const int8 * json)
 		idx++;
 	}
 	/*job_id*/
-	memcpy(curr_mm_work->job_id,json+jt[idx].start,jt[idx].end-jt[idx].start);
-	debug32("job_id:%s\n",g_mm_works[0].job_id);
+	memset(g_mm_works[0].job_id,0,20);
+	memcpy(mm_work_ptr->job_id,json+jt[idx].start,jt[idx].end-jt[idx].start);
+	debug32("job_id:%s\n",mm_work_ptr->job_id);
 	idx++;
 	
 	/*prehash*/
 	idx++;
 	
 	/*coinb1*/
+	len = (jt[idx].end - jt[idx].start)/2;
+	
 	idx++;
+	
 	
 	/*coinb2*/
 	idx++;
@@ -217,13 +233,13 @@ int32 parse_nofify(const int8 * json)
 	idx+=jt[idx].size+1;
 	
 	/*version*/
-	memcpy(curr_mm_work->header,json+jt[idx].start,jt[idx].end-jt[idx].start);
-	debug32("version:%s\n",curr_mm_work->header);
+	memcpy(mm_work_ptr->header,json+jt[idx].start,jt[idx].end-jt[idx].start);
+	debug32("version:%s\n",mm_work_ptr->header);
 	idx++;
 	
 	/*nbits*/
-	memcpy(curr_mm_work->target,json+jt[idx].start,jt[idx].end-jt[idx].start);
-	debug32("nbits:%s\n",curr_mm_work->target);
+	memcpy(mm_work_ptr->target,json+jt[idx].start,jt[idx].end-jt[idx].start);
+	debug32("nbits:%s\n",mm_work_ptr->target);
 	idx++;
 	
 	
