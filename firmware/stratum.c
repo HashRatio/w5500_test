@@ -222,7 +222,7 @@ int32 parse_nofify(const int8 * json)
 	
 	/*coinb1*/
 	len = (jt[idx].end - jt[idx].start)/2;
-	
+	i = len;
 	idx++;
 	
 	
