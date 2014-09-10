@@ -442,13 +442,14 @@ void init_dns_client(void)
 int32 do_dns(uint8 * dns_ip,uint8 * domain,uint8 * ip)
 {
 	while(1)
-	{ 
-		if( (dns_ok==1) ||  (dns_retry_cnt > DNS_RETRY))
-		{
+	{ 		
+		if(dns_ok==1)
+			return 1;
+		
+		if(dns_retry_cnt > DNS_RETRY)
 			return 0;
-		}
 
-		else if(memcmp(dns_ip,"\x00\x00\x00\x00",4))
+		if(memcmp(dns_ip,"\x00\x00\x00\x00",4))
 		{
 			switch(dns_query(dns_ip, SOCK_DNS,domain))
 			{
@@ -456,21 +457,18 @@ int32 do_dns(uint8 * dns_ip,uint8 * domain,uint8 * ip)
 				dns_ok=1;
 				memcpy(ip,DNS_GET_IP,4);
 				dns_retry_cnt=0;
-				debug32("Get [%s]'s IP address [%d.%d.%d.%d] from %d.%d.%d.%d\r\n",domain,ip[0],ip[1],ip[2],ip[3],dns_ip[0],dns_ip[1],dns_ip[2],dns_ip[3]);
 				break;
 			  case DNS_RET_FAIL:
 				dns_ok=0;
 				dns_retry_cnt++;
-				debug32("Fail! Please check your network configuration or DNS server.\r\n");
 				break;
 			  default:
 				break;
 			}
 		}
 		else
-			debug32("Invaild DNS server.\n");
-		if(ip[0]!=0 && ip[1]!=0 && ip[2]!=0 && ip[3]!=0)
-			break;
+			return 0;
 	}
-	return 0;
+	
+	return 1;
 }

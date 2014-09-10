@@ -38,6 +38,7 @@
 #define IDLE_TIME	60	/* Seconds */
 
 #define CH 0
+
 //uint8 buffer[];/*定义一个2KB的缓存*/
 uint8 mac[6]={0x00,0x08,0xDC,0x01,0x02,0x03};/*定义Mac变量*/
 uint8 ip[4]={192,168,2,200};/*定义Ip变量*/
@@ -47,7 +48,7 @@ uint8 dip[4]={192,168,2,116};
 uint8 DEFAULT_DNS[4] = {192,168,2,1};
 uint8 RIP[4];
 uint8 DOMAIN[] = "stratum.f2pool.com";
-//int8 a[BUFFER_SIZE];
+//int8 a[40];
 
 void W5500_Init(void)
 {
@@ -81,14 +82,16 @@ int main(int argv,char * * argc)
 	
 	curr_mm_work = g_mm_works;
 	
-	do_dns(DEFAULT_DNS,DOMAIN,RIP);
+	if(do_dns(DEFAULT_DNS,DOMAIN,RIP))
+		debug32("parse ok.\n");
+	else
+		debug32("parse failed.\n");
 	
     connect_poll(RIP,3333);
-	
-	// send_subscribe();
-	// send_authorize();
-	// while(1)
-		// recv_stratum(&g_mm_works[0]);
+	send_subscribe();
+	send_authorize();
+	while(1)
+		recv_stratum(&g_mm_works[0]);
 
 	return 0;
 }

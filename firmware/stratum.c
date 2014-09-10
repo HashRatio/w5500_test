@@ -40,25 +40,27 @@ uint32 nonce1_bin;
 
 int32 connect_poll(uint8 * addr, uint16 port)
 {
-    uint16 anyport = 30000;
+	uint8 ret;
+    uint16 anyport = 20000;
 	while(1){
 		switch(getSn_SR(SOCK_STRATUM))/*获取socket0的状态*/
 		{
 			case SOCK_INIT:/*socket初始化完成*/
-				debug32("SOCK_INIT\n");
+				//debug32("SOCK_INIT\n");
 				connect(SOCK_STRATUM, addr ,port);/*在TCP模式下向服务器发送连接请求*/
+				delay(500);
 				break;
 			case SOCK_ESTABLISHED:/*socket连接建立*/
-				debug32("SOCK_ESTABLISHED\n");
+				//debug32("SOCK_ESTABLISHED\n");
 				debug32("Successfully connect pool:%d.%d.%d.%d:%d\n",addr[0],addr[1],addr[2],addr[3],port);
 				return 1;
 			case SOCK_CLOSE_WAIT:/*socket等待关闭状态*/
-				debug32("SOCK_CLOSE_WAIT\n");
+				//debug32("SOCK_CLOSE_WAIT\n");
 			    break;
 			case SOCK_CLOSED:/*socket关闭*/
-				debug32("SOCK_CLOSED\n");
-			    socket(SOCK_STRATUM,Sn_MR_TCP,anyport++,Sn_MR_ND);/*打开socket的一个端口*/
-			    break;
+			    ret = socket(SOCK_STRATUM,Sn_MR_TCP,anyport++,Sn_MR_ND);/*打开socket的一个端口*/
+			    //debug32("SOCKCLOSED:0x%02x\n",ret);
+				break;
 		 }
 	}
 }
