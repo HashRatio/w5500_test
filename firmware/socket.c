@@ -345,7 +345,6 @@ uint16 sendto(SOCKET s, const uint8 * buf, uint16 len, uint8 * addr, uint16 port
 */ 
 uint16 recvfrom(SOCKET s, uint8 * buf, uint16 len, uint8 * addr, uint16 *port)
 {
-	debug32("recv_from. len:%d\n",len);
 	uint8 head[8];
 	uint16 data_len=0;
 	uint16 ptr=0;

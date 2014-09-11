@@ -150,7 +150,7 @@ int32 recv_stratum()
 			}
 			if(json_end == len - 1){
 				if(buffer[json_end] == '\n' || buffer[json_end] == '\0' ){
-					debug32("!!!!!good end.\n");
+					//debug32("!!!!!good end.\n");
 					memset(buffer,0,BUFFER_SIZE);
 					json_begin = 0;
 					json_end = 0;
@@ -158,7 +158,7 @@ int32 recv_stratum()
 				else{
 					//debug32("buffer:%s\n",buffer);
 					//debug32("json_end:%d end:%c 0x%x\n",json_end,buffer[json_end],buffer[json_end]);
-					debug32("!!!!!bad end.\n");
+					//debug32("!!!!!bad end.\n");
 					memcpy(buffer,buffer+json_begin,len-json_begin);
 					json_end = len-json_begin;
 				}
@@ -171,78 +171,114 @@ int32 recv_stratum()
 	return 0;
 }
 
+void hex2bin(uint8 * bin,uint8 * hex,int32 bin_len){
+	int i;
+	char hex_str[3] = "\0\0\0";
+	for(i=0;i<bin_len;i++){
+		memcpy(hex_str,hex+i*2,2);
+		bin[i] = (uint8)ATOI(hex_str,16);
+	}
+}
+
 int32 parse_nofify(const int8 * json)
 {
 	int32 idx = 0;
+	int32 prehash_idx;
 	int32 len;
+	int32 offset = 0;
+	//char hex_str[3] = "\0\0\0";
 	int32 i;
-	
+
 	notify_cnt++;
-	debug32("parse_notify:%d\n",notify_cnt);
-/* 	uint8 job_id[4];
-
-	size_t coinbase_len;
-	uint8 coinbase[HRTO_P_COINBASE_SIZE];
-
-	uint32 nonce2;
-	int nonce2_offset;
-	int nonce2_size;
-
-	int merkle_offset;
-	int nmerkles;
-	uint8 merkles[HRTO_P_MERKLES_COUNT][32];
-
-	uint8 header[128];
-
-	uint32 diff;
-	uint32 pool_no;
-
-	uint8	target[32]; */
 	
 	while(1){
 		if(idx >= je)
 			break;
 		if(strncmp(json+jt[idx].start,"params",6) == 0){
-			debug32("params:%d\n",idx);
+			//debug32("params:%d\n",idx);
 			idx++;
-			debug32("%s\n",json+jt[idx].start);
+			//debug32("%s\n",json+jt[idx].start);
 			idx++;
 			break;
 		}
 		idx++;
 	}
 	/*job_id*/
-	memset(g_mm_works[0].job_id,0,20);
+	memset(mm_work_ptr->job_id,0,20);
 	memcpy(mm_work_ptr->job_id,json+jt[idx].start,jt[idx].end-jt[idx].start);
-	debug32("job_id:%s\n",mm_work_ptr->job_id);
+	//debug32("job_id:%s\n",mm_work_ptr->job_id);
 	idx++;
 	
-	/*prehash*/
+	/*locate prehash*/
+	prehash_idx = idx;
 	idx++;
 	
 	/*coinb1*/
 	len = (jt[idx].end - jt[idx].start)/2;
-	i = len;
+	hex2bin(mm_work_ptr->coinbase+offset,(uint8*)json+jt[idx].start,len);
+	offset += len;
 	idx++;
 	
+	/*extra_nonce1*/
+	memcpy(mm_work_ptr->coinbase+offset,(uint8 *)&nonce1_bin,4);
+	offset += 4;
+	
+	/*extra_nonce2*/
+	memset(mm_work_ptr->coinbase+offset,0,4);
+	offset += 4;
 	
 	/*coinb2*/
+	len = (jt[idx].end - jt[idx].start)/2;
+	hex2bin(mm_work_ptr->coinbase+offset,(uint8*)json+jt[idx].start,len);
+	offset += len;
+	idx++;
+
+	/*coinbase length*/
+	mm_work_ptr->coinbase_len = offset;
+	
+	/*merkel number*/
+	mm_work_ptr->nmerkles = jt[idx].size;
 	idx++;
 	
 	/*merkel_branch*/
-	idx+=jt[idx].size+1;
+	for(i=0;i < mm_work_ptr->nmerkles;i++){
+		len = (jt[idx].end - jt[idx].start)/2;
+		hex2bin((uint8*)mm_work_ptr->merkles[i],(uint8*)json+jt[idx].start,len);
+		idx++;
+	}
 	
 	/*version*/
-	memcpy(mm_work_ptr->header,json+jt[idx].start,jt[idx].end-jt[idx].start);
-	debug32("version:%s\n",mm_work_ptr->header);
+	hex2bin(mm_work_ptr->header,(uint8*)json+jt[idx].start,4);
+	offset = 4;
 	idx++;
+	
+	/*copy prehash*/
+	len = (jt[prehash_idx].end - jt[prehash_idx].start)/2;
+	hex2bin(mm_work_ptr->header+offset,(uint8*)json+jt[prehash_idx].start,len);
+	offset += len;
+	
+	/*merkel root offset*/
+	mm_work_ptr->merkle_offset = offset;
+	offset += 32;
+	
+	/*ntime*/
+	offset += 4;
 	
 	/*nbits*/
-	memcpy(mm_work_ptr->target,json+jt[idx].start,jt[idx].end-jt[idx].start);
-	debug32("nbits:%s\n",mm_work_ptr->target);
+	len = (jt[idx].end - jt[idx].start)/2;
+	hex2bin(mm_work_ptr->header+offset,(uint8*)json+jt[idx].start,len);
+	offset += len;
 	idx++;
 	
+	/*nonce*/
+	offset += 4;
 	
+	/*padding*/
+	mm_work_ptr->header[offset+3] = 0x80;
+	mm_work_ptr->header[124] = 0x80;
+	mm_work_ptr->header[125] = 0x02;
+
+	hexdump((uint8*)mm_work_ptr->header,128);
 	
 	return 0;
 }

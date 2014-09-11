@@ -48,7 +48,7 @@ uint8 gw[4]={192,168,2,1};/*定义Gateway变量*/
 uint8 dip[4]={192,168,2,116};
 uint8 DEFAULT_DNS[4] = {192,168,2,1};
 uint8 RIP[4];
-uint8 DOMAIN[] = "us1.ghash.io";
+uint8 DOMAIN[] = "stratum.f2pool.com";
 
 void W5500_Init(void)
 {
