@@ -320,8 +320,10 @@ int32 parse_stratum(const int8 * json)
 		if(idx >= je)
 			return -1;
 		if(strncmp(json+jt[idx].start,"method",6) == 0){
-			if(strncmp(json+jt[idx+1].start,"mining.notify",13) == 0)
+			if(strncmp(json+jt[idx+1].start,"mining.notify",13) == 0){
+				g_new_stratum = 1;
 				return parse_nofify(json);
+			}
 			if(strncmp(json+jt[idx+1].start,"mining.diff",11) == 0)
 				return parse_diff(json);
 		}

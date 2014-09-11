@@ -58,6 +58,8 @@ typedef struct mm_work {
 
 extern mm_work * mm_work_ptr;
 extern mm_work g_mm_works[];
+extern work g_works[];
+
 extern uint32 nonce1_bin;
 extern int8 nonce1_str[9];
 

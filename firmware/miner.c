@@ -21,6 +21,7 @@
 
 mm_work * mm_work_ptr;
 mm_work g_mm_works[2];
+work g_works[2];
 
 static inline void flip32(void *dest_p, const void *src_p)
 {
@@ -68,6 +69,9 @@ static void calc_midstate(struct mm_work *mw, struct work *work)
 	flip32(work->data, data);
 	
 	memcpy(work->data + 32, mw->header + 64, 12);
+	
+	debug32("\nmid_state\n");
+	hexdump(work->data,44);
 }
 
 void miner_gen_nonce2_work(struct mm_work *mw, uint32 nonce2, struct work *work)
@@ -79,8 +83,11 @@ void miner_gen_nonce2_work(struct mm_work *mw, uint32 nonce2, struct work *work)
 	tmp32 = bswap_32(nonce2);
 	memcpy(mw->coinbase + mw->nonce2_offset, (uint8_t *)(&tmp32), sizeof(uint32_t));
 	work->nonce2 = nonce2;
-
+	hexdump(mw->coinbase,128);
 	dsha256(mw->coinbase, mw->coinbase_len, merkle_root);
+	hexdump(merkle_root,32);
+	
+	hexdump((const uint8 *)mw->merkles,160);
 	memcpy(merkle_sha, merkle_root, 32);
 	for (i = 0; i < mw->nmerkles; i++) {
 		memcpy(merkle_sha + 32, mw->merkles[i], 32);
@@ -90,10 +97,13 @@ void miner_gen_nonce2_work(struct mm_work *mw, uint32 nonce2, struct work *work)
 	data32 = (uint32 *)merkle_sha;
 	swap32 = (uint32 *)merkle_root;
 	flip32(swap32, data32);
-
+	debug32("\nmerkle_root\n");
+	hexdump(merkle_root,32);
+	
 	memcpy(mw->header + mw->merkle_offset, merkle_root, 32);
 	memcpy(work->header, mw->header, 128);
-	
+	debug32("\nmw->header\n");
+	hexdump(mw->header,128);
 	calc_midstate(mw, work);
 }
 
