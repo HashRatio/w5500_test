@@ -97,6 +97,7 @@ int main(int argv,char * * argc)
 	uart_init();
 	uart1_init();
 	
+	uart_write(0x55);
 	debug32("Init.\n");
 	
 	uint8 txsize[8] = {2,2,2,2,2,2,2,2};/*给每个socket配置一个2KB的发送内存*/

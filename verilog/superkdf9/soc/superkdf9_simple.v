@@ -103,12 +103,14 @@ wire irom_clk_rd, irom_clk_wr;
 wire irom_rst_rd, irom_rst_wr;
 wire [31:0] irom_d_rd /* unused */, irom_d_wr;
 wire [32-2-1:0] irom_addr_rd, irom_addr_wr;
+//wire [32-2-1:0] irom_addr_rd, irom_addr_wr;
 wire irom_en_rd, irom_en_wr;
 wire irom_write_rd, irom_write_wr;
 wire dram_clk_rd, dram_clk_wr;
 wire dram_rst_rd, dram_rst_wr;
 wire [31:0] dram_d_rd /* unused */, dram_d_wr;
 wire [32-2-1:0] dram_addr_rd, dram_addr_wr;
+//wire [32-2-1:0] dram_addr_rd, dram_addr_wr;
 wire dram_en_rd, dram_en_wr;
 wire dram_write_rd, dram_write_wr;
 
