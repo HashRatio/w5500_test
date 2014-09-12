@@ -52,6 +52,7 @@ void uart_isr(void)
 {
 	while (readb(&uart->lsr) & LM32_UART_LSR_DR) {
 		rx_buf[rx_produce] = readb(&uart->rxtx);
+		uart_write(readb(&uart->lsr));
 		rx_produce = (rx_produce + 1) & UART_RINGBUFFER_MASK_RX;
 	}
 	irq_ack(IRQ_UART);

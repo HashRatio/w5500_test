@@ -9,7 +9,6 @@ _impact.log
 _xmsgs/
 
 coregen-tmp/
-mm_bd.bmm
 mm_bd.ncd
 mm.bgn
 mm.bit
