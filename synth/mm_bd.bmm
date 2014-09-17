@@ -6,40 +6,48 @@
 
 ///////////////////////////////////////////////////////////////////////////////
 //
-// Address space 'iram' 0x00000000:0x00003FFF (16 KBytes).
+// Address space 'iram' 0x00000000:0x00007FFF (32 KBytes).
 //
 ///////////////////////////////////////////////////////////////////////////////
 
-ADDRESS_SPACE iram RAMB16 [0x00000000:0x00003FFF]
+ADDRESS_SPACE iram RAMB16 [0x00000000:0x00007FFF]
     BUS_BLOCK
-        irom/gen_bram[0].bram RAMB16 [31:28] [0:4095] PLACED = X1Y20;
-        irom/gen_bram[1].bram RAMB16 [27:24] [0:4095] PLACED = X1Y16;
-        irom/gen_bram[2].bram RAMB16 [23:20] [0:4095] PLACED = X1Y12;
-        irom/gen_bram[3].bram RAMB16 [19:16] [0:4095] PLACED = X1Y18;
-        irom/gen_bram[4].bram RAMB16 [15:12] [0:4095] PLACED = X1Y22;
-        irom/gen_bram[5].bram RAMB16 [11:8] [0:4095] PLACED = X1Y14;
-        irom/gen_bram[6].bram RAMB16 [7:4] [0:4095] PLACED = X1Y10;
-        irom/gen_bram[7].bram RAMB16 [3:0] [0:4095] PLACED = X1Y8;
+        irom/gen_bram[0].bram RAMB16 [31:30] [0:8191] PLACED = X0Y14;
+        irom/gen_bram[1].bram RAMB16 [29:28] [0:8191] PLACED = X0Y12;
+        irom/gen_bram[2].bram RAMB16 [27:26] [0:8191] PLACED = X0Y18;
+        irom/gen_bram[3].bram RAMB16 [25:24] [0:8191] PLACED = X0Y16;
+        irom/gen_bram[4].bram RAMB16 [23:22] [0:8191] PLACED = X0Y20;
+        irom/gen_bram[5].bram RAMB16 [21:20] [0:8191] PLACED = X0Y22;
+        irom/gen_bram[6].bram RAMB16 [19:18] [0:8191] PLACED = X1Y16;
+        irom/gen_bram[7].bram RAMB16 [17:16] [0:8191] PLACED = X1Y10;
+        irom/gen_bram[8].bram RAMB16 [15:14] [0:8191] PLACED = X1Y6;
+        irom/gen_bram[9].bram RAMB16 [13:12] [0:8191] PLACED = X1Y8;
+        irom/gen_bram[10].bram RAMB16 [11:10] [0:8191] PLACED = X1Y14;
+        irom/gen_bram[11].bram RAMB16 [9:8] [0:8191] PLACED = X1Y12;
+        irom/gen_bram[12].bram RAMB16 [7:6] [0:8191] PLACED = X1Y18;
+        irom/gen_bram[13].bram RAMB16 [5:4] [0:8191] PLACED = X1Y20;
+        irom/gen_bram[14].bram RAMB16 [3:2] [0:8191] PLACED = X1Y22;
+        irom/gen_bram[15].bram RAMB16 [1:0] [0:8191] PLACED = X1Y24;
     END_BUS_BLOCK;
 END_ADDRESS_SPACE;
 
 
 ///////////////////////////////////////////////////////////////////////////////
 //
-// Address space 'dram' 0x00004000:0x00007FFF (16 KBytes).
+// Address space 'dram' 0x00008000:0x0000BFFF (16 KBytes).
 //
 ///////////////////////////////////////////////////////////////////////////////
 
-ADDRESS_SPACE dram RAMB16 [0x00004000:0x00007FFF]
+ADDRESS_SPACE dram RAMB16 [0x00008000:0x0000BFFF]
     BUS_BLOCK
-        dram/gen_bram[0].bram RAMB16 [31:28] [0:4095] PLACED = X1Y28;
-        dram/gen_bram[1].bram RAMB16 [27:24] [0:4095] PLACED = X1Y2;
-        dram/gen_bram[2].bram RAMB16 [23:20] [0:4095] PLACED = X1Y4;
-        dram/gen_bram[3].bram RAMB16 [19:16] [0:4095] PLACED = X1Y26;
-        dram/gen_bram[4].bram RAMB16 [15:12] [0:4095] PLACED = X1Y24;
-        dram/gen_bram[5].bram RAMB16 [11:8] [0:4095] PLACED = X0Y14;
-        dram/gen_bram[6].bram RAMB16 [7:4] [0:4095] PLACED = X0Y12;
-        dram/gen_bram[7].bram RAMB16 [3:0] [0:4095] PLACED = X1Y6;
+        dram/gen_bram[0].bram RAMB16 [31:28] [0:4095] PLACED = X0Y28;
+        dram/gen_bram[1].bram RAMB16 [27:24] [0:4095] PLACED = X0Y24;
+        dram/gen_bram[2].bram RAMB16 [23:20] [0:4095] PLACED = X0Y26;
+        dram/gen_bram[3].bram RAMB16 [19:16] [0:4095] PLACED = X1Y4;
+        dram/gen_bram[4].bram RAMB16 [15:12] [0:4095] PLACED = X1Y2;
+        dram/gen_bram[5].bram RAMB16 [11:8] [0:4095] PLACED = X1Y28;
+        dram/gen_bram[6].bram RAMB16 [7:4] [0:4095] PLACED = X1Y30;
+        dram/gen_bram[7].bram RAMB16 [3:0] [0:4095] PLACED = X1Y26;
     END_BUS_BLOCK;
 END_ADDRESS_SPACE;
 

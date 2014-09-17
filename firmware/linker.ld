@@ -6,8 +6,8 @@ INPUT(crti.o crtbegin.o crtend.o crtn.o)
  */
 MEMORY
 {
-    Instruction_IM :  ORIGIN = 0x00000000,  LENGTH = 0x4000
-    Data_IM :  ORIGIN = 0x00004000,  LENGTH = 0x4000
+    Instruction_IM :  ORIGIN = 0x00000000,  LENGTH = 0x8000
+    Data_IM :  ORIGIN = 0x00008000,  LENGTH = 0x4000
 }
 
 SECTIONS
