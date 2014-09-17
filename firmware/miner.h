@@ -23,7 +23,7 @@ typedef struct work {
 	uint32 nonce2;
 	uint32 mm_idx;
 
-	uint8 data[44];     /* midstate[32] + data[12] */
+	uint8 data[49];     /* midstate[32] + data[12] */
 	uint8 header[128];  /* Block header */
 } work;
 

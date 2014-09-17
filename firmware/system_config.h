@@ -98,7 +98,12 @@ struct lm32_spi {
 /* Line control register */
 #define LM32_UART_LCR_WLS0	(1 << 0)
 #define LM32_UART_LCR_WLS1	(1 << 1)
-#define LM32_UART_LCR_8BIT	(LM32_UART_LCR_WLS1 | LM32_UART_LCR_WLS0)
+//#define LM32_UART_LCR_8BIT	(LM32_UART_LCR_WLS1 | LM32_UART_LCR_WLS0)
+#define LM32_UART_LCR_8BIT      (LM32_UART_LCR_WLS1 | LM32_UART_LCR_WLS0|LM32_UART_LCR_PEN|LM32_UART_LCR_EPS|LM32_UART_LCR_SP)
+#define LM32_UART_LCR_PEN       (1 << 3)
+#define LM32_UART_LCR_EPS       (1 << 4)
+#define LM32_UART_LCR_SP        (1 << 5)
+
 
 /* Modem control register */
 #define LM32_UART_MCR_DTR	(1 << 0)
