@@ -51,6 +51,7 @@ uint8 RIP[4];
 uint8 DOMAIN[] = "us1.ghash.io";
 
 
+<<<<<<< HEAD
 //static uint8_t g_pkg[HRTO_P_COUNT];
 //static uint8_t g_act[HRTO_P_COUNT];
 //static int g_new_stratum = 0;
@@ -79,6 +80,23 @@ static volatile unsigned int be200_ret_produce = 0;
 static volatile unsigned int be200_ret_consume = 0;
 
 //int8 buffer[BUFFER_SIZE];/*定义一个2KB的缓存*
+=======
+uint8 merkle_branch[] = {
+0x11,0x11,0x11,0x11,0x11,0x11,0x11,0x11,0x11,0x11,0x11,0x11,0x11,0x11,0x11,0x11,
+0x22,0x22,0x22,0x22,0x22,0x22,0x22,0x22,0x22,0x22,0x22,0x22,0x22,0x22,0x22,0x22,
+0x33,0x33,0x33,0x33,0x33,0x33,0x33,0x33,0x33,0x33,0x33,0x33,0x33,0x33,0x33,0x33,
+0x44,0x44,0x44,0x44,0x44,0x44,0x44,0x44,0x44,0x44,0x44,0x44,0x44,0x44,0x44,0x44,
+0x55,0x55,0x55,0x55,0x55,0x55,0x55,0x55,0x55,0x55,0x55,0x55,0x55,0x55,0x55,0x55,
+0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,
+0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,
+0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,
+0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,
+0x12,0x34,0x56,0x78,0x90,0xAB,0xCD,0xEF,0x12,0x34,0x56,0x78,0x90,0xAB,0xCD,0xEF,
+0x12,0x34,0x56,0x78,0x90,0xAB,0xCD,0xEF,0x12,0x34,0x56,0x78,0x90,0xAB,0xCD,0xEF,
+};
+int a = 0x11223344;
+//uint8 b[0x2000] = {0x55};
+>>>>>>> feature/generate_midstate
 void W5500_Init(void)
 {
         iinchip_hw_init();
@@ -102,6 +120,7 @@ static void encode_pkg(uint8_t *p, int type, uint8_t *buf, unsigned int len, int
 	uint16_t crc;
 	uint8_t *data;
 
+<<<<<<< HEAD
 	memset(p, 0, HRTO_P_COUNT);
 
 	p[0] = HRTO_H1;
@@ -164,6 +183,19 @@ static void be200_polling()
 	
 	data = &be200_result_buff[be200_ret_consume];
 	be200_ret_consume = (be200_ret_consume + 1) & BE200_RET_RINGBUFFER_MASK_RX;
+=======
+int main(int argv,char * * argc)
+{	
+	irq_setmask(0);
+	irq_enable(1);
+	
+	uart_init();
+	uart1_init();
+	
+	uart_write(0x55);
+	
+	debug32("0x%08x\n",(int)&a);
+>>>>>>> feature/generate_midstate
 	
 	mw = &g_mm_works[data->mm_idx];
 	
@@ -623,6 +655,7 @@ uint32_t be200_send_work(uint8_t idx,struct work *w)
 
 
 	/*
+<<<<<<< HEAD
 	static int get_pkg()
 	{
 		static char pre_last, last;
@@ -676,28 +709,47 @@ uint32_t be200_send_work(uint8_t idx,struct work *w)
 
 	//		be200_reset(i);
 	//		freq_write(i, (BE200_DEFAULT_FREQ/10) - 1);  // (X + 1) / 2
+=======
+	memcpy(mm_work_ptr->coinbase,coinbase,117);
+	mm_work_ptr->coinbase_len = 117;
+	
+	mm_work_ptr->nonce2_offset = 62;
+	
+	memcpy(mm_work_ptr->merkles,merkle_branch,160);
+	mm_work_ptr->nmerkles = 5;
+	mm_work_ptr->merkle_offset = 36;
+	miner_gen_nonce2_work(mm_work_ptr, 0xaaaaaaaa, &g_works[0]);*/
+	
+	if(do_dns(DEFAULT_DNS,DOMAIN,RIP))
+		debug32("parse ok.\n");
+	else
+		debug32("parse failed.\n");
+    connect_poll(RIP,3333);
+	send_subscribe();
+	send_authorize();
+	while(1){
+		recv_stratum(&g_mm_works[0]);
+		if(g_new_stratum){
+			miner_gen_nonce2_work(mm_work_ptr, 0, &g_works[0]);
+			g_new_stratum = 0;
+>>>>>>> feature/generate_midstate
 		}
 		delay(10);
 	}
 
 	int main(int argv,char * * argc)
 	{
-//		struct mm_work *mw;
 		struct work work;
 		uint16_t idx=0,last=0;
-//	uint8_t i;//,j,k,flag[4];
-	//	uint16_t tmp = 0;
 
-        //      uint8 txsize[8] = {2,2,2,2,2,2,2,2};/*给每个socket配置一个2KB的发送内存*/
-        //      uint8 rxsize[8] = {2,2,2,2,2,2,2,2};/*给每个socket配置一个2KB的接收内存*/		
-		//wdg_init(1);
-		//wdg_feed_sec(60);	
+        uint8 txsize[8] = {2,2,2,2,2,2,2,2};/*给每个socket配置一个2KB的发送内存*/
+        uint8 rxsize[8] = {2,2,2,2,2,2,2,2};/*给每个socket配置一个2KB的接收内存*/		
+
 		irq_setmask(0);
 		irq_enable(1);		
 		uart_init();
-		uart1_init();
-		//led(0xAA);     	
-/*
+		uart1_init();   	
+
         W5500_Init();
         setRTR(2000);//设置溢出时间值
         setRCR(3);//设置最大重新发送次数
@@ -707,12 +759,12 @@ uint32_t be200_send_work(uint8_t idx,struct work *w)
                 debug32("parse ok.\n");
         else
                 debug32("parse failed.\n");
-    connect_poll(RIP,3333);
+		connect_poll(RIP,3333);
         send_subscribe();
         send_authorize();
         while(1)
                 recv_stratum(&g_mm_works[0]);
-*/
+
 	//	debug32("MM-%s\n", MM_VERSION);
 //		adjust_fan(200); // ~= 20% 
 //		set_all_chips_idle();

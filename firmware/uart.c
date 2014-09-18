@@ -28,8 +28,7 @@ static void uart_write32(unsigned int data)
 {
 	int i;
 	unsigned char * p = (unsigned char *)&data;
-	for(i=0;i<4;i++){
-		
+	for(i=0;i<4;i++){		
 		uart_write(p[i]);
 	}
 }
