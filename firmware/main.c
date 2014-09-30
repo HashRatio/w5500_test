@@ -48,13 +48,13 @@ uint8 gw[4]={192,168,2,1};/*定义Gateway变量*/
 uint8 dip[4]={192,168,2,116};
 uint8 DEFAULT_DNS[4] = {192,168,2,1};
 uint8 RIP[4];
-uint8 DOMAIN[] = "us1.ghash.io";
+uint8 DOMAIN[] = "stratum.f2pool.com";
 
 
-<<<<<<< HEAD
+
 //static uint8_t g_pkg[HRTO_P_COUNT];
 //static uint8_t g_act[HRTO_P_COUNT];
-//static int g_new_stratum = 0;
+ int8 g_new_stratum = 0;
 static int g_local_work  = 0;
 static int g_hw_work     = 0;
 static int g_total_nonce = 0;
@@ -80,7 +80,7 @@ static volatile unsigned int be200_ret_produce = 0;
 static volatile unsigned int be200_ret_consume = 0;
 
 //int8 buffer[BUFFER_SIZE];/*定义一个2KB的缓存*
-=======
+
 uint8 merkle_branch[] = {
 0x11,0x11,0x11,0x11,0x11,0x11,0x11,0x11,0x11,0x11,0x11,0x11,0x11,0x11,0x11,0x11,
 0x22,0x22,0x22,0x22,0x22,0x22,0x22,0x22,0x22,0x22,0x22,0x22,0x22,0x22,0x22,0x22,
@@ -96,7 +96,7 @@ uint8 merkle_branch[] = {
 };
 int a = 0x11223344;
 //uint8 b[0x2000] = {0x55};
->>>>>>> feature/generate_midstate
+
 void W5500_Init(void)
 {
         iinchip_hw_init();
@@ -471,73 +471,28 @@ uint32_t be200_send_work(uint8_t idx,struct work *w)
        
 
 //	be200_cmd_rd(idx, BE200_REG_CLEAR);  // clear nonce_mask register
-
-	       w->data[0]=0x8a;
-	       w->data[1]=0x17;
-	       w->data[2]=0xcf;
-	       w->data[3]=0x6c;
-	       w->data[4]=0x88;
-	       w->data[5]=0x52;
-	       w->data[6]=0x31;
-	       w->data[7]=0x63;
-	       w->data[8]=0xa6;
-	       w->data[9]=0xa2;
-	       w->data[10]=0x13;
-	       w->data[11]=0xa7;
-	       w->data[12]=0x19;
-	       w->data[13]=0x61;
-	       w->data[14]=0x2d;
-	       w->data[15]=0xb1;
-	       w->data[16]=0x30;
-	       w->data[17]=0xa5;
-	       w->data[18]=0xe7;
-	       w->data[19]=0xdb;
-	       w->data[20]=0x47;
-	       w->data[21]=0xf8;
-	       w->data[22]=0x41;
-	       w->data[23]=0x18;
-	       w->data[24]=0x25;
-	       w->data[25]=0x70;
-	       w->data[26]=0x75;
-	       w->data[27]=0x73;
-	       w->data[28]=0x79;
-	       w->data[29]=0x47;
-	       w->data[30]=0xf3;
-	       w->data[31]=0x5e;
-	       w->data[32]=0x72;
-	       w->data[33]=0xd7;
-	       w->data[34]=0x67;
-	       w->data[35]=0xbd;
-	       w->data[36]=0x52;
-	       w->data[37]=0x90;
-	       w->data[38]=0x81;
-	       w->data[39]=0xbf;
-	       w->data[40]=0x19;
-	       w->data[41]=0x07;
-	       w->data[42]=0x0b;
-	       w->data[43]=0xfb;
-	       w->data[44]=0xff&&(w->nonce2>>24);
-	       w->data[45]=0xff&&(w->nonce2>>16);
-	       w->data[46]=0xff&&(w->nonce2>>8);
-	       w->data[47]=0xff&&(w->nonce2);
-	       w->data[48]=w->mm_idx;
-		
+	       w->data[44]=0xff&(w->nonce2>>24);
+	       w->data[45]=0xff&(w->nonce2>>16);
+	       w->data[46]=0xff&(w->nonce2>>8);
+	       w->data[47]=0xff&(w->nonce2);
+	       w->data[48]=w->mm_idx;	
         uart_writecmd(C_JOB|idx);
      
-	uart1_write(0xBB);
+//	uart1_write(0xBB);
         for(i=0;i<49;i++)
    { //   uart1_writecmd(i);       
 		
                 while(!uart_read_nonblock());
                 last = uart_read();
-                uart1_write(last);
-            uart_write(w->data[i]);
-
+                
+                uart_write(w->data[i]);
    }
-
+//      uart1_write(0xBB);
              while(!uart_read_nonblock());
                 last = uart_read();
-                uart1_write(last);
+//                uart1_write(last);
+           debug32("\nw->data\n");
+            hexdump(w->data,49);
                
 //      c = be200_cmd_rd(idx, i); 
 	//	miner_status[idx].nonce2  = w->nonce2;
@@ -569,8 +524,7 @@ uint32_t be200_send_work(uint8_t idx,struct work *w)
 			/* check the validation of the nonce*/
 			for (i = 0; i < sizeof(diff_nonce)/sizeof(diff_nonce[0]); i++) {
 				nonce_new = nonce + diff_nonce[i];
-				nonce_check = test_nonce(&g_mm_works[miner_status[idx].mm_idx],
-										 miner_status[idx].nonce2, nonce_new);
+	//			nonce_check = test_nonce(&g_mm_works[miner_status[idx].mm_idx],result,miner_status[idx].nonce2, nonce_new);
 				if (nonce_check == NONCE_DIFF) {
 					nonce = nonce_new;
 					found = 1;
@@ -613,43 +567,53 @@ uint32_t be200_send_work(uint8_t idx,struct work *w)
 		
 //	       struct lm32_uart *uart1 = (struct lm32_uart *)UART0_BASE;
 
-//		uint32_t nonce, nonce_new,nonce2,mm_idx;
-//		int32_t nonce_check = NONCE_HW;
+		uint32_t nonce, nonce_new,nonce2,mm_idx;
+		int32_t nonce_check = NONCE_HW;
 
 		int i;
-//	        int found = 0;
-//		int8_t diff_nonce[] = {0, -1, 1, -2, 2, -3, 3, 4, -4};
+	        int found = 0;
+		int8_t diff_nonce[] = {0, -1, 1, -2, 2, -3, 3, 4, -4};
 
 		      for(i=0;i<54;i++)
 		     {	
 	                  while(!uart_read_nonblock());
                           result[i] = uart_read();
-                          uart1_write(result[i]);
-		       }/*		    		        
+                        //  uart1_write(result[i]);
+		       }                                   
+                                   debug32("\nresult\n");
+                                   hexdump((const uint8 *)result,54);
+ 		    		        
 				  nonce2 = ( ( (uint32_t)result[44] << 24)  |
 					     ( (uint32_t)result[45] << 16)  |
 					     ( (uint32_t)result[46] << 8 )  |
-					     ( (uint32_t)result[47]      )   ) + 1;
-
+					     ( (uint32_t)result[47]      )   ) ;
 				  mm_idx= result[52];
-				  nonce = (  ( (uint32_t)result[48] << 24)  |
-					     ( (uint32_t)result[49] << 16)  |
-					     ( (uint32_t)result[50] << 8 )  |
-					     ( (uint32_t)result[51]      )   ) + 1;
-				
+				  nonce = (  ( (uint32_t)result[51] << 24)  |
+					     ( (uint32_t)result[50] << 16)  |
+					     ( (uint32_t)result[49] << 8 )  |
+					     ( (uint32_t)result[48]      )   ) + 1;
+			        
 				for (i = 0; i < sizeof(diff_nonce)/sizeof(diff_nonce[0]); i++) {
 				nonce_new = nonce + diff_nonce[i];
-				nonce_check = test_nonce(&g_mm_works[mm_idx],nonce2, nonce_new);          //打印test 是这一段函数     
-				if (nonce_check == NONCE_DIFF) {
+                                debug32("\ntest_nonce  before i=%0x \n",i);
+                                
+				nonce_check = test_nonce(&g_mm_works[0],result,nonce2, nonce_new);          //打印test 是这一段函数     
+		                  debug32("\ntest_nonce  after\n");
+
+                       		if (nonce_check == NONCE_DIFF ) {
 					nonce = nonce_new;
 					found = 1;
 					break;
 				}
 			}
-		      
-	*/
+                        if(nonce_check == NONCE_DIFF)
+		         debug32("\nnonce ok\n");
+                        else if(nonce_check != NONCE_DIFF)
+                         debug32("\ninvalid nonce \n");
+
+	
 		   //回送nonce给矿池  
-	  return 0;
+	  return found;
 
 	}
 
@@ -709,6 +673,7 @@ uint32_t be200_send_work(uint8_t idx,struct work *w)
 
 	//		be200_reset(i);
 	//		freq_write(i, (BE200_DEFAULT_FREQ/10) - 1);  // (X + 1) / 2
+/*
 =======
 	memcpy(mm_work_ptr->coinbase,coinbase,117);
 	mm_work_ptr->coinbase_len = 117;
@@ -718,7 +683,7 @@ uint32_t be200_send_work(uint8_t idx,struct work *w)
 	memcpy(mm_work_ptr->merkles,merkle_branch,160);
 	mm_work_ptr->nmerkles = 5;
 	mm_work_ptr->merkle_offset = 36;
-	miner_gen_nonce2_work(mm_work_ptr, 0xaaaaaaaa, &g_works[0]);*/
+	miner_gen_nonce2_work(mm_work_ptr, 0xaaaaaaaa, &g_works[0]);
 	
 	if(do_dns(DEFAULT_DNS,DOMAIN,RIP))
 		debug32("parse ok.\n");
@@ -733,22 +698,22 @@ uint32_t be200_send_work(uint8_t idx,struct work *w)
 			miner_gen_nonce2_work(mm_work_ptr, 0, &g_works[0]);
 			g_new_stratum = 0;
 >>>>>>> feature/generate_midstate
+*/
 		}
 		delay(10);
 	}
 
 	int main(int argv,char * * argc)
 	{
-		struct work work;
+//		struct work work;
 		uint16_t idx=0,last=0;
-
+        uint32_t nonce2=0;
         uint8 txsize[8] = {2,2,2,2,2,2,2,2};/*给每个socket配置一个2KB的发送内存*/
         uint8 rxsize[8] = {2,2,2,2,2,2,2,2};/*给每个socket配置一个2KB的接收内存*/		
-
-		irq_setmask(0);
-		irq_enable(1);		
-		uart_init();
-		uart1_init();   	
+	irq_setmask(0);
+	irq_enable(1);		
+	uart_init();
+	uart1_init();   	
 
         W5500_Init();
         setRTR(2000);//设置溢出时间值
@@ -762,79 +727,46 @@ uint32_t be200_send_work(uint8_t idx,struct work *w)
 		connect_poll(RIP,3333);
         send_subscribe();
         send_authorize();
-        while(1)
-                recv_stratum(&g_mm_works[0]);
+		g_working = 1; 
+ 
+               debug32("\n55 66 77\n");   	
+//       for(i=0;i<6;i++)
+//       be200_send_work(idx,&g_works[0]);
 
-	//	debug32("MM-%s\n", MM_VERSION);
-//		adjust_fan(200); // ~= 20% 
-//		set_all_chips_idle();
-//		timer_set(1,2);
-		g_working = 1;  
-		uart1_writecmd(0x55);
-                uart1_writecmd(0x66);
-		uart1_writecmd(0x77);       	
-//		uart1_writecmd(C_JOB | idx);      
-	//              be200_send_work(idx, &work);       
-//        wdg_feed_sec(60);
-/* 
-       for(j=0;j<4;j++)
-       flag[j]=0;
-
-       for(j=0;j<4;j++)
-      {   uart_writecmd(C_TRS | j);
-          k=0;
-//         timer_set(1,20);
-         for(i=0;i<67;i++)
-             {  k=0;    
-                while((!uart_read_nonblock())&&(k<250)) 
-                {delay(1);k++;}      
-                if(k==250) {flag[j]=1;uart1_write(j);break;}
-                last = uart_read();
-                uart1_write(last); 
-               
-      }
-}
-*/
-/*
-   for(i=0;i<24;i++)
-{       //   wdg_feed_sec(60);
-
-//	uart1_write(0xAA);
-       be200_send_work(idx, &work);
-//	uart1_write(0x55);
- }    
- */
 	while (1) {// if(flag[idx]==0)
                  {               
 		wdg_feed_sec(60);
                 uart_writecmd(C_ASK|idx);
                 while(!uart_read_nonblock());
-
                 last = uart_read();
-                uart1_write(last); 
-                  if(last == A_YES) {                        
-                            get_result(idx);
+                if(last== A_YES)
+                debug32("\ncmd:  %0x\n",last); 
+                  if(last == A_YES) {                       
+                           debug32("\njiaoyan result  %0x\n",get_result(idx)); 
+                         //  uart1_write(get_result(idx));
                             continue;}
                          else if(last== A_NO)
                             { continue;}
                             else if(last== A_WAL)
-                             {
+                             { 
+                                recv_stratum(&g_mm_works[0]);
+                              if(g_new_stratum){
+                                miner_gen_nonce2_work(mm_work_ptr, nonce2, &g_works[0]);
+                                nonce2++; 
+                             //   uart1_write(nonce2&0xff);
 	 /*		mw = &g_mm_works[g_cur_mm_idx];
 			mw->nonce2++;
 			miner_gen_nonce2_work(mw, mw->nonce2, &work);
 			work.mm_idx = g_cur_mm_idx;*/
                       //  wdg_feed_sec(60);
-			be200_send_work(idx,&work); 
-                              }      
+			be200_send_work(idx,&g_works[0]); 
+                              }     } 
                  else {uart_writecmd(0x00);delay(100);}
-                
-                }  //end if 
-                     
+                }  //end if  
                    //     idx++;
                    //     if(idx==4) idx=0;	
 		//be200_read_result();
-	} // while(1) 
-	
+	} // while(1) 	
 	return 0;
 }
 /*

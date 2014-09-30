@@ -5,8 +5,8 @@ NET "ex_clk_o" LOC = F6;
 #NET "INT" LOC = R7;
 
 # UART
-NET "uartSIN"  LOC = K15;
-NET "uartSOUT" LOC = L14;
+NET "uartSIN"  LOC = E7;
+NET "uartSOUT" LOC = C7;
 NET "uartSOUT" PULLUP;
 
 # UART debug

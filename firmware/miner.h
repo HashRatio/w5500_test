@@ -23,7 +23,7 @@ typedef struct work {
 	uint32 nonce2;
 	uint32 mm_idx;
 
-	uint8 data[49];     /* midstate[32] + data[12] */
+	uint8 data[52];     /* midstate[32] + data[12] */
 	uint8 header[128];  /* Block header */
 } work;
 
@@ -66,7 +66,7 @@ extern int8 nonce1_str[9];
 void miner_init_work(struct mm_work *mw, struct work *work);
 void miner_gen_nonce2_work(struct mm_work *mw, uint32 nonce2, struct work *work);
 //int test_nonce(struct mm_work *mw, struct result *ret);
-int32 test_nonce(struct mm_work *mw, uint32 nonce2, uint32 nonce);
+int32 test_nonce(struct mm_work *mw,char *result,uint32 nonce2, uint32 nonce);
 
 void set_asic_freq(uint32 value);
 uint32 get_asic_freq();
