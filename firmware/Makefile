@@ -20,7 +20,7 @@ LDFLAGS    += -nostartfiles -nodefaultlibs -nostdlib -Wl,--gc-sections -Wl,-T,li
 LDLIBS     += -Bminilibc -lminilibc -lgcc
 
 SSRCS      = sdk/crt0ram.S sdk/intr.c
-CSRCS      = main.c uart.c sha256.c twipwm.c miner.c crc16.c shifter.c timer.c  utils.c spi.c w5500.c socket.c dns.c sockutil.c jsmn.c stratum.c
+CSRCS      = main.c uart.c sha256.c twipwm.c miner.c crc16.c shifter.c timer.c  utils.c spi.c w5500.c socket.c dns.c sockutil.c jsmn.c stratum.c pub_var.c
 OBJS       := $(addsuffix .o,$(basename $(CSRCS) $(SSRCS)))
 
 BATCHFILE	:= $(shell mktemp)

@@ -48,7 +48,7 @@ uint8 gw[4]={192,168,2,1};/*定义Gateway变量*/
 uint8 dip[4]={192,168,2,116};
 uint8 DEFAULT_DNS[4] = {192,168,2,1};
 uint8 RIP[4];
-uint8 DOMAIN[] = "stratum.f2pool.com";
+uint8 DOMAIN[] = "us1.ghash.io";
 
 
 
@@ -560,7 +560,7 @@ uint32_t be200_send_work(uint8_t idx,struct work *w)
 		return 0;
 	}
 
-	static int get_result(int board)
+	/*static int get_result(int board)
 	{
 		static char result[54];
 	//        int idx;
@@ -615,7 +615,7 @@ uint32_t be200_send_work(uint8_t idx,struct work *w)
 		   //回送nonce给矿池  
 	  return found;
 
-	}
+	}*/
 
 
 	/*
@@ -703,70 +703,63 @@ uint32_t be200_send_work(uint8_t idx,struct work *w)
 		delay(10);
 	}
 
-	int main(int argv,char * * argc)
-	{
-//		struct work work;
-		uint16_t idx=0,last=0;
-        uint32_t nonce2=0;
-        uint8 txsize[8] = {2,2,2,2,2,2,2,2};/*给每个socket配置一个2KB的发送内存*/
-        uint8 rxsize[8] = {2,2,2,2,2,2,2,2};/*给每个socket配置一个2KB的接收内存*/		
+int main(int argv,char * * argc)
+{
+	//uint16_t idx=0,last=0;
+    //uint32_t nonce2=0;
+	//shift_32bytes();
+    uint8 txsize[8] = {2,2,2,2,2,2,2,2};/*给每个socket配置一个2KB的发送内存*/
+    uint8 rxsize[8] = {2,2,2,2,2,2,2,2};/*给每个socket配置一个2KB的接收内存*/		
 	irq_setmask(0);
 	irq_enable(1);		
 	uart_init();
 	uart1_init();   	
 
-        W5500_Init();
-        setRTR(2000);//设置溢出时间值
-        setRCR(3);//设置最大重新发送次数
-        sysinit(txsize, rxsize);//初始化8个socket
-        mm_work_ptr = &g_mm_works[0];
-        if(do_dns(DEFAULT_DNS,DOMAIN,RIP))
-                debug32("parse ok.\n");
-        else
-                debug32("parse failed.\n");
-		connect_poll(RIP,3333);
-        send_subscribe();
-        send_authorize();
-		g_working = 1; 
- 
-               debug32("\n55 66 77\n");   	
-//       for(i=0;i<6;i++)
-//       be200_send_work(idx,&g_works[0]);
+	W5500_Init();
+	debug32("Init done.\n");
+	setRTR(2000);//设置溢出时间值
+	setRCR(3);//设置最大重新发送次数
+	sysinit(txsize, rxsize);//初始化8个socket
+	mm_work_ptr = &g_mm_works[0];
+	if(do_dns(DEFAULT_DNS,DOMAIN,RIP))
+		debug32("parse ok.\n");
+	else
+		debug32("parse failed.\n");
+	connect_poll(RIP,3333);
+	//send_authorize();
+	send_subscribe();
+	send_authorize();
+	g_working = 1; 
+	debug32("\n55 66 77\n");   	
 
-	while (1) {// if(flag[idx]==0)
-                 {               
-		wdg_feed_sec(60);
-                uart_writecmd(C_ASK|idx);
-                while(!uart_read_nonblock());
-                last = uart_read();
-                if(last== A_YES)
-                debug32("\ncmd:  %0x\n",last); 
-                  if(last == A_YES) {                       
-                           debug32("\njiaoyan result  %0x\n",get_result(idx)); 
-                         //  uart1_write(get_result(idx));
-                            continue;}
-                         else if(last== A_NO)
-                            { continue;}
-                            else if(last== A_WAL)
-                             { 
-                                recv_stratum(&g_mm_works[0]);
-                              if(g_new_stratum){
-                                miner_gen_nonce2_work(mm_work_ptr, nonce2, &g_works[0]);
-                                nonce2++; 
-                             //   uart1_write(nonce2&0xff);
-	 /*		mw = &g_mm_works[g_cur_mm_idx];
-			mw->nonce2++;
-			miner_gen_nonce2_work(mw, mw->nonce2, &work);
-			work.mm_idx = g_cur_mm_idx;*/
-                      //  wdg_feed_sec(60);
-			be200_send_work(idx,&g_works[0]); 
-                              }     } 
-                 else {uart_writecmd(0x00);delay(100);}
-                }  //end if  
-                   //     idx++;
-                   //     if(idx==4) idx=0;	
-		//be200_read_result();
-	} // while(1) 	
+	while(1){
+		recv_stratum(&g_mm_works[0]);
+		/*wdg_feed_sec(60);
+		uart_writecmd(C_ASK|idx);
+		while(!uart_read_nonblock());
+		last = uart_read();
+		if(last== A_YES)
+			debug32("\ncmd:  %0x\n",last); 
+		if(last == A_YES){                       
+			debug32("\njiaoyan result  %0x\n",get_result(idx)); 
+			continue;
+		}
+        else if(last== A_NO){
+			continue;
+		}
+		else if(last== A_WAL){		
+			recv_stratum(&g_mm_works[0]);
+			if(g_new_stratum){
+				miner_gen_nonce2_work(mm_work_ptr, nonce2, &g_works[0]);
+				nonce2++; 
+				be200_send_work(idx,&g_works[0]); 
+			}
+		} 
+		else{
+			uart_writecmd(0x00);
+			delay(100);
+		}*/
+	}
 	return 0;
 }
 /*
