@@ -17,4 +17,5 @@ extern int32 connect_poll(uint8 * addr, uint16 port);
 extern int32 recv_stratum();
 extern int32 send_subscribe();
 extern int32 send_authorize();
+extern int32 send_submit();
 #endif

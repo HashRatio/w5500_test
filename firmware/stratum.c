@@ -37,8 +37,6 @@ struct pool_task{
 int8 nonce1_str[9];
 uint32 nonce1_bin;
 
-static uint8 diff0_target[32] = {0x00,0x00,0x00,0x00,0xFF,0xFF,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00};
-
 int32 connect_poll(uint8 * addr, uint16 port)
 {
 	uint8 ret;
@@ -147,7 +145,7 @@ int32 recv_stratum()
 				buffer[json_end] = '\0';
 				//debug32("end: %d\n",json_end);
 				json_len = json_end - json_begin;
-				//debug32("ready to parse:%s\n",buffer+json_begin);
+				debug32("ready to parse:%s\n",buffer+json_begin);
 				parse_stratum(buffer+json_begin);
 				json_begin = json_end + 1;
 			}
@@ -183,14 +181,14 @@ static void hex2bin(uint8 * bin,uint8 * hex,int32 bin_len){
 	}
 }
 
-static void swap_int32(uint8* p){
+/*static void swap_int32(uint8* p){
 	uint8 buff[4];
 	memcpy(buff,p,4);
 	p[0] = buff[3];
 	p[1] = buff[2];
 	p[2] = buff[1];
 	p[3] = buff[0];
-}
+}*/
 
 int32 parse_nofify(const int8 * json)
 {
@@ -230,10 +228,13 @@ int32 parse_nofify(const int8 * json)
 	
 	/*extra_nonce1*/
 	memcpy(mm_work_ptr->coinbase+offset,(uint8 *)&nonce1_bin,4);
+	//swap_int32(mm_work_ptr->coinbase+offset);
 	offset += 4;
 	
 	/*extra_nonce2*/
 	memset(mm_work_ptr->coinbase+offset,0,4);
+	//swap_int32(mm_work_ptr->coinbase+offset);
+	mm_work_ptr->nonce2_offset = offset;
 	offset += 4;
 	
 	/*coinb2*/
@@ -258,7 +259,7 @@ int32 parse_nofify(const int8 * json)
 	
 	/*version #LITTLE ENDIAN# */
 	hex2bin(mm_work_ptr->header,(uint8*)json+jt[idx].start,4);
-	swap_int32(mm_work_ptr->header);
+	//swap_int32(mm_work_ptr->header);
 	offset = 4;
 	idx++;
 	
@@ -271,15 +272,20 @@ int32 parse_nofify(const int8 * json)
 	mm_work_ptr->merkle_offset = offset;
 	offset += 32;
 	
-	/*ntime*/
-	offset += 4;
-	
-	/*nbits #LITTLE ENDIAN#*/
+	/*ntime #BIG ENDIAN#*/
+	idx++;
 	len = (jt[idx].end - jt[idx].start)/2;
 	hex2bin(mm_work_ptr->header+offset,(uint8*)json+jt[idx].start,len);
-	swap_int32(mm_work_ptr->header+offset);
+	//swap_int32(mm_work_ptr->header+offset);
 	offset += len;
-	idx++;
+	
+	/*nbits #BIT ENDIAN#*/
+	idx--;
+	len = (jt[idx].end - jt[idx].start)/2;
+	hex2bin(mm_work_ptr->header+offset,(uint8*)json+jt[idx].start,len);
+	//swap_int32(mm_work_ptr->header+offset);
+	offset += len;
+	//idx++;
 	
 	/*nonce*/
 	offset += 4;
@@ -289,7 +295,7 @@ int32 parse_nofify(const int8 * json)
 	mm_work_ptr->header[124] = 0x80;
 	mm_work_ptr->header[125] = 0x02;
 
-	hexdump((uint8*)mm_work_ptr->header,128);
+	//hexdump((uint8*)mm_work_ptr->header,128);
 	
 	return 0;
 }
@@ -297,8 +303,8 @@ int32 parse_nofify(const int8 * json)
 static void shift_32bytes(uint8 * target)
 {
 	int32 i;
-	for(i=32;i>=1;i--){
-		target[i] = target[i-1]&0x01?(0x80|(target[i] >> 1)):(target[i] >> 1);
+	for(i=0;i<32;i++){
+		target[i] = target[i+1]&0x01?(0x80|(target[i] >> 1)):(target[i] >> 1);
 	}
 }
 /*
@@ -319,7 +325,7 @@ static void calc_target(uint8 * target,uint32 diff)
 {
 	int32 i=0;
 	int32 loop;
-	memcpy(target,diff0_target,32);
+	memcpy(target,g_diff1_target,32);
 	while(diff){
 		if( (diff & 0x00000001) == 0x00000001)
 			for(i=0;i<loop;i++){
@@ -346,7 +352,9 @@ int32 parse_diff(const int8 * json)
 	}
 	*(char*)(json+jt[idx].end)=0;
 	diff = ATOI((char *)json+jt[idx].start,10);
-	calc_target(g_current_target,diff);
+	diff = 1;
+	calc_target(mm_work_ptr->target,diff);
+	hexdump(mm_work_ptr->target,32);
 	debug32("stratum diff:%d\n",diff);
 	return 0;
 }
@@ -414,7 +422,7 @@ int32 parse_stratum(const int8 * json)
 				break;
 			}
 			else if(recv_pkg_id == submit_id){
-				
+				debug32("submit response.\n");
 			}
 			break;
 		}
