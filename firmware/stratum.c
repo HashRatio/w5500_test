@@ -294,6 +294,9 @@ int32 parse_nofify(const int8 * json)
 	mm_work_ptr->header[offset+3] = 0x80;
 	mm_work_ptr->header[124] = 0x80;
 	mm_work_ptr->header[125] = 0x02;
+	// mm_work_ptr->header[offset] = 0x80;
+	// mm_work_ptr->header[126] = 0x02;
+	// mm_work_ptr->header[127] = 0x80;
 
 	//hexdump((uint8*)mm_work_ptr->header,128);
 	
@@ -352,7 +355,7 @@ int32 parse_diff(const int8 * json)
 	}
 	*(char*)(json+jt[idx].end)=0;
 	diff = ATOI((char *)json+jt[idx].start,10);
-	diff = 1;
+	//diff = 256;
 	calc_target(mm_work_ptr->target,diff);
 	hexdump(mm_work_ptr->target,32);
 	debug32("stratum diff:%d\n",diff);

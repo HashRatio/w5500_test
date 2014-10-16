@@ -39,7 +39,7 @@
 
 #define MM_BUF_NUM  3
 #define IDLE_TIME	60	/* Seconds */
-
+char result[54];
 //int8 buffer[BUFFER_SIZE];/*定义一个2KB的缓存*/
 uint8 mac[6]={0x00,0x08,0xDC,0x01,0x02,0x03};/*定义Mac变量*/
 uint8 ip[4]={192,168,2,200};/*定义Ip变量*/
@@ -47,8 +47,9 @@ uint8 sn[4]={255,255,255,0};/*定义Subnet变量*/
 uint8 gw[4]={192,168,2,1};/*定义Gateway变量*/
 uint8 dip[4]={192,168,2,116};
 uint8 DEFAULT_DNS[4] = {192,168,2,1};
-uint8 RIP[4];
-uint8 DOMAIN[] = "stratum.f2pool.com";
+uint8 RIP[4] = {182,92,180,216};
+uint8 DOMAIN[] = "us1.ghash.io";
+//uint8 DOMAIN[] = "182.92.180.216";
 
 //static uint8_t g_pkg[HRTO_P_COUNT];
 //static uint8_t g_act[HRTO_P_COUNT];
@@ -111,8 +112,7 @@ uint32_t be200_send_work(uint8_t idx,struct work *w)
 {
 	uint8_t i;
 	uint8_t last=0;
-       
-//	be200_cmd_rd(idx, BE200_REG_CLEAR);  // clear nonce_mask register
+    
 	w->data[44]=0xff&(w->nonce2>>24);
 	w->data[45]=0xff&(w->nonce2>>16);
 	w->data[46]=0xff&(w->nonce2>>8);
@@ -133,7 +133,7 @@ uint32_t be200_send_work(uint8_t idx,struct work *w)
 
 static int get_result(int board,uint32 * ptr_ntime,uint32 * ptr_nonce,uint32 * ptr_nonce2)
 {
-	static char result[54];
+	
 	uint32_t nonce_new,mm_idx;
 	int32_t nonce_check = NONCE_HW;
 	int i;
@@ -142,9 +142,7 @@ static int get_result(int board,uint32 * ptr_ntime,uint32 * ptr_nonce,uint32 * p
 	for(i=0;i<54;i++)
 	{	
 		result[i] = uart_read();
-	}
-	//debug32("\nget_result:\n");
-	//hexdump((const uint8 *)result,54);	
+	}	
 	
 	*ptr_ntime = ( ( (uint32_t)result[36] << 24)  |
 		 ( (uint32_t)result[37] << 16)  |
@@ -155,8 +153,6 @@ static int get_result(int board,uint32 * ptr_ntime,uint32 * ptr_nonce,uint32 * p
 		 ( (uint32_t)result[45] << 16)  |
 		 ( (uint32_t)result[46] << 8 )  |
 		 ( (uint32_t)result[47]      )   ) ;
-	
-	*ptr_nonce2 = 0;
 	
 	*ptr_nonce = (  ( (uint32_t)result[51] << 24)  |
 		 ( (uint32_t)result[50] << 16)  |
@@ -217,8 +213,16 @@ int main(int argv,char * * argc)
 	setRTR(2000);//设置溢出时间值
 	setRCR(3);//设置最大重新发送次数
 	sysinit(txsize, rxsize);//初始化8个socket
+	
+	/*union{
+		uint32 i;
+		uint8 s[4];
+	} c;
+	c.i=0x12345678;
+	debug32("%s\n",(0x12==c.s[0])?"Big":"Little");*/
+	
 	mm_work_ptr = &g_mm_works[0];
-	memcpy(mm_work_ptr->target,g_diff1_target,32);
+	memcpy(mm_work_ptr->target,g_diff256_target,32);
 	if(do_dns(DEFAULT_DNS,DOMAIN,RIP))
 		debug32("parse ok.\n");
 	else
@@ -229,21 +233,29 @@ int main(int argv,char * * argc)
 	send_authorize();
 	g_working = 1; 
 	
-	//uart_writecmd(C_LPO|idx);
-	//uart_writecmd(C_DIF|0x00);
+	uart_writecmd(C_LPO|idx);
+	uart_writecmd(C_DIF|0x00);
+	
 	while(1){
 		recv_stratum(&g_mm_works[0]);
 		wdg_feed_sec(60);
 		uart_writecmd(C_ASK|idx);
-		//debug32("\nWAIT\n");
 		last = uart_read();
-		//debug32("\n%02x\n",last);
 		if(last == A_YES){
-			//debug32("\nA_YES\n");
 			nonce_check = get_result(idx,&ntime_submit,&nonce_submit,&nonce2_submit); 
 			if(nonce_check == NONCE_VALID){
-				debug32("\nVALID NONCE:ntime %08x,nonce %08x,nonce2 %08x\n",ntime_submit,nonce_submit,nonce2_submit);
-				send_submit(mm_work_ptr, nonce2_submit, ntime_submit, nonce_submit);
+				/*debug32("\ncoinbase\n");
+				hexdump(mm_work_ptr->coinbase,160);
+				debug32("\nmerkle_root\n");
+				hexdump(mm_work_ptr->header + 36,32);
+				debug32("\nheader\n");
+				hexdump(mm_work_ptr->header,128);
+				debug32("\nwork->header\n");
+				hexdump(g_works[0].header,128);
+				debug32("\nresult\n");
+				hexdump((uint8*)result,48);
+				debug32("\nVALID NONCE:ntime %08x,nonce %08x,nonce2 %08x\n",ntime_submit,nonce_submit,nonce2_submit);*/
+				send_submit(mm_work_ptr, nonce2_submit, ntime_submit, bswap_32(nonce_submit));
 			}
 			else if(nonce_check == NONCE_DIFF)
 				;//debug32("\nLESS DIFF NONCE\n");
@@ -256,8 +268,9 @@ int main(int argv,char * * argc)
 		else if(last== A_WAL){
 			//debug32("\nWAL\n");
 			if(g_new_stratum){
+				//debug32("main:nonce2 %08x\n",nonce2);
 				miner_gen_nonce2_work(mm_work_ptr, nonce2, &g_works[0]);
-				nonce2++; 
+				nonce2++;
 				be200_send_work(idx,&g_works[0]); 
 				g_new_stratum = 1;
 			}

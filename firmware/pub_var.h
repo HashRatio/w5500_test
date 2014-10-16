@@ -12,4 +12,5 @@ extern uint8 g_current_target[32];
 extern uint8 g_worker_name[50];
 extern uint8 g_worker_pwd[10];
 extern uint8 g_diff1_target[32];
+extern uint8 g_diff256_target[32];
 #endif
