@@ -635,8 +635,8 @@ void read_data(SOCKET s, vuint8 * src, vuint8 * dst, uint16 len)
 
 	src_mask = (uint32)src & getIINCHIP_RxMASK(s);
 	src_ptr = (uint8 *)(getIINCHIP_RxBASE(s) + src_mask);
-	debug32("read_data\n");
-	debug32("src_mask:0x%08x src_ptr:0x%08x len:%d src_mask+len:%d max:%d\n",src_mask,(uint32)src_ptr,len,src_mask+len,getIINCHIP_RxMAX(0));
+	//debug32("read_data\n");
+	//debug32("src_mask:0x%08x src_ptr:0x%08x len:%d src_mask+len:%d max:%d\n",src_mask,(uint32)src_ptr,len,src_mask+len,getIINCHIP_RxMAX(0));
 	if( (src_mask + len) > getIINCHIP_RxMAX(s) ) 
 	{
 		size = getIINCHIP_RxMAX(s) - src_mask;
@@ -644,12 +644,12 @@ void read_data(SOCKET s, vuint8 * src, vuint8 * dst, uint16 len)
 		dst += size;
 		size = len - size;
 		src_ptr = (uint8 *)(uint32)(getIINCHIP_RxBASE(s));
-		debug32("(in if)src_mask:0x%08x src_ptr:0x%08x\n",src_mask,(uint32)src_ptr);
+		//debug32("(in if)src_mask:0x%08x src_ptr:0x%08x\n",src_mask,(uint32)src_ptr);
 		wiz_read_buf((uint32)src_ptr, (uint8*) dst,size);
 	} 
 	else
 	{
-		debug32("(in else)src_mask:0x%08x src_ptr:0x%08x\n",src_mask,(uint32)src_ptr);
+		//debug32("(in else)src_mask:0x%08x src_ptr:0x%08x\n",src_mask,(uint32)src_ptr);
 		wiz_read_buf((uint32)src_ptr, (uint8*) dst,len);
 	}
 }

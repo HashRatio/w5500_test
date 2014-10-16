@@ -2,6 +2,8 @@
 *.o
 *.d
 *.a
+*.sw*
+/bin
 /mm.bit
 /mm.bin
 /mm.elf

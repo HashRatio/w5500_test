@@ -257,7 +257,7 @@ uint16 recv(SOCKET s, uint8 * buf, uint16 len)
 #ifdef __DEF_IINCHIP_DBG__
 	debug32("recv()\r\n");
 #endif
-	debug32("recv_from. len:%d\n",len);
+	//debug32("recv_from. len:%d\n",len);
 	if ( len > 0 )
 	{
 		recv_data_processing(s, buf, len);
@@ -345,7 +345,6 @@ uint16 sendto(SOCKET s, const uint8 * buf, uint16 len, uint8 * addr, uint16 port
 */ 
 uint16 recvfrom(SOCKET s, uint8 * buf, uint16 len, uint8 * addr, uint16 *port)
 {
-	debug32("recv_from. len:%d\n",len);
 	uint8 head[8];
 	uint16 data_len=0;
 	uint16 ptr=0;

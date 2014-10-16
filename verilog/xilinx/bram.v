@@ -20,6 +20,16 @@ localparam Log2Words = log2(words);
 localparam bitwidth = 32 /* 32-bit data width */ / N; // par BRAM
 localparam Log2bitwidth = log2(bitwidth);
 
+initial
+	begin
+		$display("N=",N);
+		$display("words=",words);
+		$display("Log2Words=",Log2Words);
+		$display("bitwidth=",bitwidth);
+		$display("Log2bitwidth=",Log2bitwidth);
+		$display("DATA_WIDTH_A=",9 * (bitwidth / 8) + (bitwidth < 8) * bitwidth);
+	end
+	
 generate
 	genvar i;
 	for (i = 0; i < N; i = i + 1) begin: gen_bram

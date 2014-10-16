@@ -28,8 +28,7 @@ static void uart_write32(unsigned int data)
 {
 	int i;
 	unsigned char * p = (unsigned char *)&data;
-	for(i=0;i<4;i++){
-		
+	for(i=0;i<4;i++){		
 		uart_write(p[i]);
 	}
 }
@@ -49,9 +48,10 @@ void uart_test(void)
 }
 
 void uart_isr(void)
-{
+   {     
 	while (readb(&uart->lsr) & LM32_UART_LSR_DR) {
-		rx_buf[rx_produce] = readb(&uart->rxtx);
+           	rx_buf[rx_produce] = readb(&uart->rxtx);
+              //  uart1_write(rx_buf[rx_produce]);
 		rx_produce = (rx_produce + 1) & UART_RINGBUFFER_MASK_RX;
 	}
 	irq_ack(IRQ_UART);
@@ -75,12 +75,29 @@ int uart_read_nonblock(void)
 void uart_write(char c)
 {
 	unsigned int oldmask;
+	int i=0;
 
 	oldmask = irq_getmask();
 	irq_setmask(0);
 
-	while (!(readb(&uart->lsr) & (LM32_UART_LSR_THRR | LM32_UART_LSR_TEMT)))
-		;
+	while (!(readb(&uart->lsr) & (LM32_UART_LSR_THRR | LM32_UART_LSR_TEMT)));
+	writeb(0xef&LM32_UART_LCR_8BIT, &uart->lcr);
+	while(i<1000){
+		i++;
+	}
+	writeb(c, &uart->rxtx);
+	irq_setmask(oldmask);
+}
+
+void uart_writecmd(char c)
+{
+	unsigned int oldmask;
+
+	oldmask = irq_getmask();
+	irq_setmask(0);
+
+	while (!(readb(&uart->lsr) & (LM32_UART_LSR_THRR | LM32_UART_LSR_TEMT)));
+	writeb(LM32_UART_LCR_8BIT, &uart->lcr);
 	writeb(c, &uart->rxtx);
 
 	irq_setmask(oldmask);
@@ -172,7 +189,7 @@ void uart1_init(void)
 	writeb(value, &uart1->divh);
 }
 
-void uart1_write(char c)
+void uart1_writecmd(char c)
 {
 	unsigned int oldmask;
 
@@ -182,10 +199,35 @@ void uart1_write(char c)
 	if (c == '\n')
 		uart1_write('\r');
 
+	while (!(readb(&uart1->lsr) & (LM32_UART_LSR_THRR | LM32_UART_LSR_TEMT)));
+    writeb(LM32_UART_LCR_8BIT, &uart1->lcr);
+	writeb(c, &uart1->rxtx);
+        
+	irq_setmask(oldmask);
+}
+
+void uart1_write(char c)
+{
+	unsigned int oldmask;
+      int i=0;
+
+	oldmask = irq_getmask();
+	irq_setmask(0);
+
+	if (c == '\n')
+		uart1_write('\r');
+//      writeb((0xef&LM32_UART_LCR_8BIT), &uart1->lcr);
+    //   writeb(0xef&LM32_UART_LCR_8BIT, &uart1->rxtx);
+     //  writeb(uart1->lcr, &uart1->rxtx);
 	while (!(readb(&uart1->lsr) & (LM32_UART_LSR_THRR | LM32_UART_LSR_TEMT)))
 		;
+        writeb(0xef&LM32_UART_LCR_8BIT, &uart1->lcr);
+       while(i<1000)
+       {i++;}
+       i=0;
+       // writeb(uart1->lcr, &uart1->rxtx);
 	writeb(c, &uart1->rxtx);
-
+      //	writeb(LM32_UART_LCR_8BIT, &uart1->lcr);
 	irq_setmask(oldmask);
 }
 

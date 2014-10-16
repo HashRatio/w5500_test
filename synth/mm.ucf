@@ -1,25 +1,27 @@
 # Global controls
 NET "ex_clk_i" LOC = J16;
-NET "ex_clk_o" LOC = F4;
+NET "ex_clk_o" LOC = F6;
 
 #NET "INT" LOC = R7;
 
 # UART
-NET "uartSIN"  LOC = K15;
-NET "uartSOUT" LOC = L14;
+NET "uartSIN"  LOC = E7;
+NET "uartSOUT" LOC = C7;
 NET "uartSOUT" PULLUP;
 
 # UART debug
-NET "uart_debugSIN" LOC = L16;
-NET "uart_debugSOUT" LOC = M13;
+NET "uart_debugSIN" LOC = T15;
+NET "uart_debugSOUT" LOC = R15;
 NET "uart_debugSOUT" PULLUP;
 
-NET "w5500_spi_MISO_MASTER" LOC = E15;
-NET "w5500_spi_MOSI_MASTER" LOC = K16;
-NET "w5500_spi_SS_N_MASTER" LOC = D16;
-NET "w5500_spi_SCLK_MASTER" LOC = H16;
-NET "w5500_spi_RESET" LOC = E16;
-NET "w5500_INT" LOC = J14;
+NET "w5500_spi_MISO_MASTER" LOC = A5;
+NET "w5500_spi_MOSI_MASTER" LOC = F7;
+NET "w5500_spi_SS_N_MASTER" LOC = D6;
+NET "w5500_spi_SCLK_MASTER" LOC = C6;
+NET "w5500_spi_RESET" LOC = A4;
+NET "w5500_INT" LOC = A6;
+
+NET "INT" LOC = F2;
 
 # SPI Flash: W25Q80BV
 #NET "POWER_ON" LOC = T3 | SLEW = QUIETIO;

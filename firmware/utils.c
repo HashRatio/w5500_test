@@ -1,6 +1,7 @@
 #include "utils.h"
 #include "system_config.h"
 #include "minilibc.h"
+#include "defines.h"
 
 void delay(unsigned int ms)
 {

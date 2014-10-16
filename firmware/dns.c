@@ -8,14 +8,14 @@
 #include "dns.h"
 #include "sockutil.h"
 #include "defines.h"
+#include "pub_var.h"
+#include "miner.h"
 
-uint8 DNS_GET_IP[4];
-uint16 MSG_ID = 0x1122;
-uint8 BUFPUB[1024];
-//CONFIG_MSG ConfigMsg;
-uint8 DEFAULT_DNS[4] = {192,168,2,1};
-//uint8 DEFAULT_DNS[4] = {192,168,2,108};
-//uint8 DEFAULT_DNS[4] = {8,8,8,8};
+static uint8 DNS_GET_IP[4];
+uint16 MSG_ID = 0;
+static uint8 dns_retry_cnt=0;
+static uint8 dns_ok=0;
+	
 /*
 ********************************************************************************
 *              MAKE DNS QUERY MESSAGE
@@ -71,11 +71,6 @@ int dns_makequery(uint16 op, uint8 * name, uint8 * buf, uint16 len)
     if (!cp1)
     {
       *cp++ = 0;			/* Last one; write null and finish */
-      // int i;
-		// for(i=0;i<((int)((uint32)(cp) - (uint32)(buf)));i++){
-			// debug32("%02x ",buf[i]);
-		// }
-		// debug32("\n");
 	  break;
     }
     dname += len+1;
@@ -86,11 +81,6 @@ int dns_makequery(uint16 op, uint8 * name, uint8 * buf, uint16 len)
   *(uint8*)&cp[2] = 0x00;//htons(0xAA);				/* class */
   *(uint8*)&cp[3] = 0x01;//htons(0xAA);				/* class */
   cp += sizeof(uint16)*2;
-  int i;
-  for(i=0;i<((int)((uint32)(cp) - (uint32)(buf)));i++){
-	debug32("%02x ",buf[i]);
-  }
-  debug32("\n");
   return ((int)((uint32)(cp) - (uint32)(buf)));
 }
 
@@ -208,32 +198,13 @@ uint8 * dns_answer(uint8 * msg, uint8 * cp)
 {
   int16 len, type;
   //	int8  xdata name[MAX_DNS_BUF_SIZE];
-  //debug32("before dns_answer->parse_name: %08x\n",cp);
   len = parse_name(msg, cp, /*name,*/ MAX_DNS_BUF_SIZE);
   if (len == -1) return 0;
   cp += len;
   
-  //debug32("after dns_answer->parse_name: %08x\n",cp);
-  //int i;
-  //debug32("msg\n");
-  // for(i=0;i<MAX_DNS_BUF_SIZE;i++){
-    // debug32("%02x ",msg[i]);
-  // }
-  //debug32("\n"); 
-  //debug32("cp\n");  
-  // for(i=0;i<MAX_DNS_BUF_SIZE;i++){
-    // debug32("%02x ",cp[i]);
-  // }
-  // debug32("\n");
-  
   //type = ntohs(*((uint16*)&cp[0]));
   type = ntohs(*((uint16*)&cp[1]));
   type = (cp[0]<<8) + cp[1];
-  //debug32("type:%04x\n",type);
-  // for(i=0;i<MAX_DNS_BUF_SIZE;i++){
-    // debug32("%02x ",cp[i]);
-  // }
-  debug32("\n");
   cp += 2;		/* type */
   cp += 2;		/* class */
   cp += 4;		/* ttl */
@@ -242,7 +213,6 @@ uint8 * dns_answer(uint8 * msg, uint8 * cp)
   switch (type)
   {
     case TYPE_A:
-	  debug32("TYPE_A\n");
       DNS_GET_IP[0] = *cp++;
       DNS_GET_IP[1] = *cp++;
       DNS_GET_IP[2] = *cp++;
@@ -254,30 +224,14 @@ uint8 * dns_answer(uint8 * msg, uint8 * cp)
     case TYPE_MR:
     case TYPE_NS:
     case TYPE_PTR:
-      /* These types all consist of a single domain name */
-      /* convert it to ascii format */
-	  // debug32("TYPE_PTR\n");
-	  // int i;
-		// for(i=0;i<MAX_DNS_BUF_SIZE;i++){
-		// debug32("%02x ",msg[i]);
-		// }
-		// debug32("\n");
-		// for(i=0;i<MAX_DNS_BUF_SIZE;i++){
-		// debug32("%02x ",cp[i]);
-		// }
-		// debug32("\n");
-	  // debug32("before TYPE_PTR:%x\n",cp);
       len = parse_name(msg, cp, /*name,*/ MAX_DNS_BUF_SIZE);
       if (len == -1){
-		debug32("parse failed.\n");
 		return 0;
 	}
       
       cp += len;
-	  debug32("after TYPE_PTR:%x\n",cp);
       break;
     case TYPE_HINFO:
-	  debug32("TYPE_HINFO\n");
       len = *cp++;
       cp += len;
       
@@ -285,7 +239,6 @@ uint8 * dns_answer(uint8 * msg, uint8 * cp)
       cp += len;
       break;
     case TYPE_MX:
-	  debug32("TYPE_MX\n");
       cp += 2;
       /* Get domain name of exchanger */
       len = parse_name(msg, cp,/* name,*/ MAX_DNS_BUF_SIZE);
@@ -294,7 +247,6 @@ uint8 * dns_answer(uint8 * msg, uint8 * cp)
       cp += len;
       break;
     case TYPE_SOA:
-	  debug32("TYPE_SOA\n");
       /* Get domain name of name server */
       len = parse_name(msg, cp,/* name,*/ MAX_DNS_BUF_SIZE);
       if (len == -1) return 0;
@@ -314,13 +266,11 @@ uint8 * dns_answer(uint8 * msg, uint8 * cp)
       cp += 4;
       break;
     case TYPE_TXT:
-	  debug32("TYPE_TXT\n");
       /* Just stash */
       break;
     default:
-		debug32("ignore\n");
     /* Ignore */
-    break;
+		break;
   }
   
   return cp;
@@ -350,14 +300,12 @@ uint8 parseMSG(struct dhdr * pdhdr, uint8 * pbuf)
   
   //pdhdr->id = ntohs(*((uint16*)&msg[0]));
   pdhdr->id = (*((uint16*)&msg[0]));
-  //debug32("pdhdr->id %04x\n",pdhdr->id);
   
   //tmp = ntohs(*((uint16*)&msg[2]));
   tmp = (*((uint16*)&msg[2]));
   if (tmp & 0x8000) pdhdr->qr = 1;
   
   pdhdr->opcode = (tmp >> 11) & 0xf;
-  //debug32("pdhdr->opcode %04x\n",pdhdr->opcode);
   
   if (tmp & 0x0400) pdhdr->aa = 1;
   if (tmp & 0x0200) pdhdr->tc = 1;
@@ -365,23 +313,18 @@ uint8 parseMSG(struct dhdr * pdhdr, uint8 * pbuf)
   if (tmp & 0x0080) pdhdr->ra = 1;
   
   pdhdr->rcode = tmp & 0xf;
-  //debug32("pdhdr->rcode %04x\n",pdhdr->rcode);
   
   //pdhdr->qdcount = ntohs(*((uint16*)&msg[4]));
   pdhdr->qdcount = (*((uint16*)&msg[4]));
-  //debug32("pdhdr->qdcount %04x\n",pdhdr->qdcount);
   
   //pdhdr->ancount = ntohs(*((uint16*)&msg[6]));
   pdhdr->ancount = (*((uint16*)&msg[6]));
-  //debug32("pdhdr->ancount %04x\n",pdhdr->ancount);
   
   //pdhdr->nscount = ntohs(*((uint16*)&msg[8]));
   pdhdr->nscount = (*((uint16*)&msg[8]));
-  //debug32("pdhdr->nscount %04x\n",pdhdr->nscount);
   
   //pdhdr->arcount = ntohs(*((uint16*)&msg[10]));
   pdhdr->arcount = (*((uint16*)&msg[10]));
-  //debug32("pdhdr->arcount %04x\n",pdhdr->arcount);
   
   /* Now parse the variable length sections */
   cp = &msg[12];
@@ -389,17 +332,13 @@ uint8 parseMSG(struct dhdr * pdhdr, uint8 * pbuf)
   /* Question section */
   for (i = 0; i < pdhdr->qdcount; i++)
   {
-	//debug32("before question: %08x\n",cp);
     cp = dns_question(msg, cp);
-	//debug32("after question: %08x\n",cp);
   }
   
   /* Answer section */
   for (i = 0; i < pdhdr->ancount; i++)
   {
-	//debug32("before answer: %08x\n",cp);
     cp = dns_answer(msg, cp);
-	//debug32("after answer: %08x\n",cp);
   }
   
   /* Name server (authority) section */
@@ -430,7 +369,7 @@ uint8 parseMSG(struct dhdr * pdhdr, uint8 * pbuf)
 * Note        :
 ********************************************************************************
 */
-uint8 dns_query(uint8 s, uint8 * name)
+uint8 dns_query(uint8 * dns_ip, uint8 s, uint8 * name)
 {
   static uint32 dns_wait_time = 0;
   struct dhdr dhp;
@@ -439,19 +378,11 @@ uint8 dns_query(uint8 s, uint8 * name)
   switch(getSn_SR(s))
   {
     case SOCK_UDP:
-		debug32("SOCK_UDP\n");
       if ((len = getSn_RX_RSR(s)) > 0)
       {
         if (len > MAX_DNS_BUF_SIZE) len = MAX_DNS_BUF_SIZE;
-        len = recvfrom(s, BUFPUB, len, ip, &port);
-		debug32("recvfrom:%d\n",len);
-		int i;
-		for(i=0;i<len;i++)
-		{
-			debug32("%02x ",BUFPUB[i]);
-		}
-		debug32("\n");
-        if(parseMSG(&dhp, BUFPUB))
+        len = recvfrom(s, (uint8*)buffer, len, ip, &port);
+        if(parseMSG(&dhp, (uint8*)buffer))
         {
           close(s);
           return DNS_RET_SUCCESS;
@@ -471,15 +402,12 @@ uint8 dns_query(uint8 s, uint8 * name)
       }
       break;
     case SOCK_CLOSED:
-		debug32("SOCK_CLOSED\n");
 		dns_wait_time = 0;
 		socket(s, Sn_MR_UDP, 3000, 0);
-		len = dns_makequery(0, name, BUFPUB, MAX_DNS_BUF_SIZE);
-		//debug32("dns_makequery:%d\n",len);
+		len = dns_makequery(0, name, (uint8*)buffer, MAX_DNS_BUF_SIZE);
 		uint8 str[32];
-		memcpy(str,BUFPUB,31);
-		//debug32("dns_makequery:%s\n",str);
-		sendto(s, BUFPUB, len, DEFAULT_DNS, IPPORT_DOMAIN);
+		memcpy(str,(uint8*)buffer,31);
+		sendto(s, (uint8*)buffer, len, dns_ip, IPPORT_DOMAIN);
 		break;         
   }
   return DNS_RET_PROGRESS;
@@ -507,4 +435,38 @@ void init_dns_client(void)
   sysinit(txsize, rxsize);
   
   //sprintf((char*)ConfigMsg.domain,"%s","www.baidu.com"); 
+}
+
+int32 do_dns(uint8 * dns_ip,uint8 * domain,uint8 * ip)
+{
+	while(1)
+	{ 		
+		if(dns_ok==1)
+			return 1;
+		
+		if(dns_retry_cnt > DNS_RETRY)
+			return 0;
+
+		if(memcmp(dns_ip,"\x00\x00\x00\x00",4))
+		{	
+			switch(dns_query(dns_ip, SOCK_DNS,domain))
+			{
+			  case DNS_RET_SUCCESS:
+				dns_ok=1;
+				memcpy(ip,DNS_GET_IP,4);
+				dns_retry_cnt=0;
+				break;
+			  case DNS_RET_FAIL:
+				dns_ok=0;
+				dns_retry_cnt++;
+				break;
+			  default:
+				break;
+			}
+		}
+		else
+			return 0;
+	}
+	
+	return 1;
 }

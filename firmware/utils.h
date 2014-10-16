@@ -2,6 +2,7 @@
 #define _UTILS_H
 
 #include "types.h"
+
 void delay(unsigned int ms);
 void delay_us(unsigned int us);
 extern uint16 ATOI(char* str,uint16 base);
@@ -12,4 +13,5 @@ void replacetochar(char * str,char oldchar,char newchar);
 char C2D(uint8 c);
 uint16 swaps(uint16 i);
 uint32 swapl(uint32 l);
+//void shift_32bytes(uint8 * target);
 #endif

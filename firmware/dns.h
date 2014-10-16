@@ -9,7 +9,6 @@
 #define  DNS_RET_PROGRESS  0
 #define  DNS_RET_FAIL      1
 #define  DNS_RET_SUCCESS   2
-extern unsigned char BUFPUB[1024];
 
 #define  EXTERN_DNS_SERVERIP  ConfigMsg.dns
 #define  EXTERN_DNS_SOCKBUF   BUFPUB
@@ -75,10 +74,10 @@ struct dhdr
 	unsigned short  arcount;	/* Additional record count */
 };
 
-
-extern uint8 DEFAULT_DNS[4];
-extern unsigned char DNS_GET_IP[4];
-extern unsigned char dns_query(unsigned char s, unsigned char * name);
+//extern uint8 DEFAULT_DNS[4];
+//extern unsigned char DNS_GET_IP[4];
+extern unsigned char BUFPUB[1024];
+extern unsigned char dns_query(uint8 * dns_ip, unsigned char s, unsigned char * name);
 extern void init_dns_client(void);
-
+extern int32 do_dns(uint8 * dns_ip, uint8 * domain,uint8 * ip);
 #endif	/* _DNS_H_ */

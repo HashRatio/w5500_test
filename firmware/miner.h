@@ -23,7 +23,7 @@ typedef struct work {
 	uint32 nonce2;
 	uint32 mm_idx;
 
-	uint8 data[44];     /* midstate[32] + data[12] */
+	uint8 data[52];     /* midstate[32] + data[12] */
 	uint8 header[128];  /* Block header */
 } work;
 
@@ -32,10 +32,10 @@ typedef struct result {
 	uint8	task_id[8];   /* Same with work task_id */
 	uint8	timeout[4];
 	uint8 nonce[4];
-} result;
+} result1;
 
 typedef struct mm_work {
-	uint8 job_id[16];
+	uint8 job_id[20];
 
 	size_t coinbase_len;
 	uint8 coinbase[HRTO_P_COINBASE_SIZE];
@@ -56,11 +56,17 @@ typedef struct mm_work {
 	uint8	target[32];
 } mm_work;
 
-extern mm_work g_mm_worksf[1];
+extern mm_work * mm_work_ptr;
+extern mm_work g_mm_works[];
+extern work g_works[];
+
+extern uint32 nonce1_bin;
+extern int8 nonce1_str[9];
+
 void miner_init_work(struct mm_work *mw, struct work *work);
 void miner_gen_nonce2_work(struct mm_work *mw, uint32 nonce2, struct work *work);
 //int test_nonce(struct mm_work *mw, struct result *ret);
-int32 test_nonce(struct mm_work *mw, uint32 nonce2, uint32 nonce);
+int32 test_nonce(struct mm_work *mw,char * result,uint32 nonce2, uint32 nonce);
 
 void set_asic_freq(uint32 value);
 uint32 get_asic_freq();
