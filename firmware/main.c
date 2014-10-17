@@ -35,7 +35,7 @@
 #include "jsmn.h"
 #include "stratum.h"
 #include "pub_var.h"
-
+#include "flash.h"
 
 #define MM_BUF_NUM  3
 #define IDLE_TIME	60	/* Seconds */
@@ -49,8 +49,6 @@ uint8 dip[4]={192,168,2,116};
 uint8 DEFAULT_DNS[4] = {192,168,2,1};
 uint8 RIP[4];
 uint8 DOMAIN[] = "stratum.f2pool.com";
-
-
 
 //static uint8_t g_pkg[HRTO_P_COUNT];
 //static uint8_t g_act[HRTO_P_COUNT];
@@ -462,34 +460,26 @@ static int decode_pkg(uint8_t *p)
 }
 */
 
-
 uint32_t be200_send_work(uint8_t idx,struct work *w)
 {
-
         uint8_t i;
         uint8_t last=0;
-       
-
 //	be200_cmd_rd(idx, BE200_REG_CLEAR);  // clear nonce_mask register
 	       w->data[44]=0xff&(w->nonce2>>24);
 	       w->data[45]=0xff&(w->nonce2>>16);
 	       w->data[46]=0xff&(w->nonce2>>8);
 	       w->data[47]=0xff&(w->nonce2);
 	       w->data[48]=w->mm_idx;	
-        uart_writecmd(C_JOB|idx);
-     
+        uart_writecmd(idx,C_JOB); 
 //	uart1_write(0xBB);
         for(i=0;i<49;i++)
-   { //   uart1_writecmd(i);       
-		
-                while(!uart_read_nonblock());
-                last = uart_read();
+   { //   uart1_writecmd(i);       	
                 
-                uart_write(w->data[i]);
+                last = uart_read(idx); 
+                uart_write(idx,w->data[i]);
    }
 //      uart1_write(0xBB);
-             while(!uart_read_nonblock());
-                last = uart_read();
+                last = uart_read(idx);
 //                uart1_write(last);
            debug32("\nw->data\n");
             hexdump(w->data,49);
@@ -577,7 +567,7 @@ uint32_t be200_send_work(uint8_t idx,struct work *w)
 		      for(i=0;i<54;i++)
 		     {	
 	                  while(!uart_read_nonblock());
-                          result[i] = uart_read();
+                          result[i] = uart_read(board);
                         //  uart1_write(result[i]);
 		       }                                   
                                    debug32("\nresult\n");
@@ -663,13 +653,7 @@ uint32_t be200_send_work(uint8_t idx,struct work *w)
 		int i;
 	       // uint8_t c=0xe0;
 	       // uint8_t d=0x40;
-		for (i = 0; i < HRTO_DEFAULT_MINERS; i++) {
-			uart_writecmd(0xe0|i/24);  
-			uart_write(0x40|i%24);
-			
-			uart_writecmd(0xe0|i%24);
-			uart_write(0x20|i%24);
-			uart_write(0x11);               
+		for (i = 0; i < HRTO_DEFAULT_MINERS; i++)             
 
 	//		be200_reset(i);
 	//		freq_write(i, (BE200_DEFAULT_FREQ/10) - 1);  // (X + 1) / 2
@@ -699,22 +683,29 @@ uint32_t be200_send_work(uint8_t idx,struct work *w)
 			g_new_stratum = 0;
 >>>>>>> feature/generate_midstate
 */
-		}
+		
 		delay(10);
 	}
 
 	int main(int argv,char * * argc)
 	{
 //		struct work work;
-		uint16_t idx=0,last=0;
+		uint16_t idx=1,last=0;
         uint32_t nonce2=0;
-        uint8 txsize[8] = {2,2,2,2,2,2,2,2};/*给每个socket配置一个2KB的发送内存*/
+        uint8 txsize[8] = {2,3,4,5,6,7,8,9};/*给每个socket配置一个2KB的发送内存*/
         uint8 rxsize[8] = {2,2,2,2,2,2,2,2};/*给每个socket配置一个2KB的接收内存*/		
 	irq_setmask(0);
 	irq_enable(1);		
-	uart_init();
+	uart_init(); 
+//	uart2_init();
+//	uart3_init();
+//	uart4_init();
 	uart1_init();   	
 
+        debug32("uart ok\n");
+//        debug32("SPI_Flash_ReadID=%0x\n",SPI_Flash_ReadID());
+//        fwiz_write_buf(0x00000000,txsize,8);
+//        flash_wiz_read_buf(0x00000000,txsize,8);
         W5500_Init();
         setRTR(2000);//设置溢出时间值
         setRCR(3);//设置最大重新发送次数
@@ -727,18 +718,15 @@ uint32_t be200_send_work(uint8_t idx,struct work *w)
 		connect_poll(RIP,3333);
         send_subscribe();
         send_authorize();
-		g_working = 1; 
- 
+		g_working = 1;  
                debug32("\n55 66 77\n");   	
 //       for(i=0;i<6;i++)
 //       be200_send_work(idx,&g_works[0]);
-
 	while (1) {// if(flag[idx]==0)
                  {               
 		wdg_feed_sec(60);
-                uart_writecmd(C_ASK|idx);
-                while(!uart_read_nonblock());
-                last = uart_read();
+                uart_writecmd(idx,C_ASK);
+                last = uart_read(idx);
                 if(last== A_YES)
                 debug32("\ncmd:  %0x\n",last); 
                   if(last == A_YES) {                       
@@ -753,15 +741,15 @@ uint32_t be200_send_work(uint8_t idx,struct work *w)
                               if(g_new_stratum){
                                 miner_gen_nonce2_work(mm_work_ptr, nonce2, &g_works[0]);
                                 nonce2++; 
-                             //   uart1_write(nonce2&0xff);
+                        //   uart1_write(nonce2&0xff);
 	 /*		mw = &g_mm_works[g_cur_mm_idx];
 			mw->nonce2++;
 			miner_gen_nonce2_work(mw, mw->nonce2, &work);
 			work.mm_idx = g_cur_mm_idx;*/
-                      //  wdg_feed_sec(60);
+                        //  wdg_feed_sec(60);
 			be200_send_work(idx,&g_works[0]); 
                               }     } 
-                 else {uart_writecmd(0x00);delay(100);}
+                 else {uart_writecmd(idx,0x00);delay(100);}
                 }  //end if  
                    //     idx++;
                    //     if(idx==4) idx=0;	
