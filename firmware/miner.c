@@ -70,14 +70,8 @@ static void calc_midstate(struct mm_work *mw, struct work *work)
 	
 	memcpy(work->data + 32, mw->header + 64, 12);
 	
-//	debug32("\nmid_state\n");
-        
-	hexdump(work->data,44);
-/*      uart1_write(0xee);
-       for(i=0;i<44;i++)
-        uart1_write(work->data[i]);
-           uart1_write(0xee);
-*/
+	//debug32("\nmid_state\n");      
+	//hexdump(work->data,44);
 
 }
 
@@ -86,17 +80,13 @@ void miner_gen_nonce2_work(struct mm_work *mw, uint32 nonce2, struct work *work)
 	uint8 merkle_root[32], merkle_sha[64];
 	uint32 *data32, *swap32, tmp32;
 	int i;
-
-	tmp32 = bswap_32(nonce2);
+	
+	//tmp32 = bswap_32(nonce2);
+	tmp32 = nonce2;
 	memcpy(mw->coinbase + mw->nonce2_offset, (uint8_t *)(&tmp32), sizeof(uint32_t));
 	work->nonce2 = nonce2;
-        debug32("\ncoinbase \n");
 
-	hexdump(mw->coinbase,128);
 	dsha256(mw->coinbase, mw->coinbase_len, merkle_root);
-	hexdump(merkle_root,32);
-	
-	hexdump((const uint8 *)mw->merkles,160);
 	memcpy(merkle_sha, merkle_root, 32);
 	for (i = 0; i < mw->nmerkles; i++) {
 		memcpy(merkle_sha + 32, mw->merkles[i], 32);
@@ -106,16 +96,10 @@ void miner_gen_nonce2_work(struct mm_work *mw, uint32 nonce2, struct work *work)
 	data32 = (uint32 *)merkle_sha;
 	swap32 = (uint32 *)merkle_root;
 	flip32(swap32, data32);
-	debug32("\nmerkle_root\n");
-	hexdump(merkle_root,32);
 	
 	memcpy(mw->header + mw->merkle_offset, merkle_root, 32);
 	memcpy(work->header, mw->header, 128);
 
-
-	debug32("\nmw->header\n");
-//       debug32("\nnonce2  work->nonce2 %0x %0x\n",nonce2,work->nonce2);
-	hexdump(mw->header,128);
 	calc_midstate(mw, work);
 }
 
@@ -123,22 +107,20 @@ int fulltest(const unsigned char *hash, const unsigned char *target)
 {
 	uint32_t *hash32 = (uint32_t *)hash;
 	uint32_t *target32 = (uint32_t *)target;
-	int rc = 1;
+	int rc = NONCE_DIFF;
 	int i;
 
 	for (i = 28 / 4; i >= 0; i--) {
 		uint32_t h32tmp = bswap_32(hash32[i]);
 		uint32_t t32tmp = bswap_32(target32[i]);
-
-              debug32("\n target \n");         
-              hexdump(target,4);
-
+		//debug32("fulltest:%02d,%08x,%08x\n",i,h32tmp,t32tmp);
 		if (h32tmp > t32tmp) {
-			rc = NONCE_VALID;
+			rc = NONCE_DIFF;
 			break;
 		}
 		if (h32tmp < t32tmp) {
-			rc = NONCE_DIFF;
+			rc = NONCE_VALID;
+			hexdump(hash,32);
 			break;
 		}
 	}
@@ -148,26 +130,19 @@ int fulltest(const unsigned char *hash, const unsigned char *target)
 
 int32 test_nonce(struct mm_work *mw,char *result ,uint32 nonce2, uint32 nonce)
 {
+	//uint32 ntime = 0;
 	/* Generate the work base on nonce2 */
 	struct work work;
-//	debug32("Test: %08x %08x\n", nonce2, nonce);
 	miner_gen_nonce2_work(mw, nonce2, &work);
-        work.header[68]=result[36];
-        work.header[69]=result[37];
-        work.header[70]=result[38];
-        work.header[71]=result[39];
-
-//      debug32("\nwork->header jiaoyan\n");
-//       debug32("\nnonce2  work->nonce2 %0x %0x\n",nonce2,work->nonce2);
-//        hexdump(work.header,128);
+	
+	//ntime
+	//memcpy((uint8*)&ntime,result+36,4);
+	//debug32("%08x\n",ntime);
+	memcpy(work.header+68,result+36,4);
         
 	/* Write the nonce to block header */
 	uint32_t *work_nonce = (uint32_t *)(work.header + 64 + 12);
 	*work_nonce = bswap_32(nonce);
-       
-      debug32("\nwork->header jiaoyan\n");
-//       debug32("\nnonce2  work->nonce2 %0x %0x\n",nonce2,work->nonce2);
-        hexdump(work.header,128);
 
 	/* Regen hash */
 	uint32_t *data32 = (uint32_t *)(work.header);
@@ -178,12 +153,10 @@ int32 test_nonce(struct mm_work *mw,char *result ,uint32 nonce2, uint32 nonce)
 
 	flip80(swap32, data32);
 	dsha256(swap, 80, hash1);
-        debug32("\nhash1\n");
-        hexdump(hash1,32);
 
 	if (*hash_32 != 0)
 		return NONCE_HW;
-	
+		
 	/* Compare hash with target */
 	return fulltest(hash1, mw->target);
 }

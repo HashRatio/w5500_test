@@ -20,15 +20,15 @@ static int32 json_begin = 0;
 static int32 json_end = 0;
 //static int32 json_ptr = 0;
 static int32 notify_cnt = 0;
+//static uint8 diff_str[64];
 int32 flag_diff;
 int32 flag_notify;
 
-int32 current_diff;
 int32 authorize_id;
 int32 subscribe_id;
 int32 submit_id;
 
-int8 buffer[2048];
+//int8 buffer[2048];
 
 struct pool_task{
 	
@@ -68,18 +68,13 @@ int32 send_subscribe()
 {
 	pkg_id++;
 	memset(buffer,0,BUFFER_SIZE);
-	m_sprintf(buffer,"{\"id\": %d, \"method\": \"mining.subscribe\", \"params\": [\"hashratio miner\"]}\n", pkg_id);
-	//debug32("%s",buffer);
-	//debug32("0x%08x\n",buffer);
+	m_sprintf(buffer,"{\"id\": %d, \"method\": \"mining.subscribe\", \"params\": [\"hashratio\"]}\n", pkg_id);
 	if(getSn_IR(SOCK_STRATUM) & Sn_IR_CON)
     {
         setSn_IR(SOCK_STRATUM, Sn_IR_CON);/*Sn_IR的第0位置1*/
     }
-	//hexdump((const uint8 *)buffer,2048);
 	send(SOCK_STRATUM,(uint8*)buffer,strlen(buffer),0);
 	subscribe_id = pkg_id;
-	//debug32("0x%08x\n",buffer);
-	//hexdump((const uint8 *)buffer,2048);
 	return 0;
 }
 
@@ -87,23 +82,28 @@ int32 send_authorize()
 {
 	pkg_id++;
 	memset(buffer,0,BUFFER_SIZE);
-	m_sprintf(buffer,"{\"params\": [\"whb.miner1\", \"password\"], \"id\": %d, \"method\": \"mining.authorize\"}\n", pkg_id);
-	//debug32("%s",buffer);
+	m_sprintf(buffer,"{\"params\": [\"%s\", \"%s\"], \"id\": %d, \"method\": \"mining.authorize\"}\n", g_worker_name,g_worker_pwd,pkg_id);
+	debug32("%s",buffer);
 	if(getSn_IR(SOCK_STRATUM) & Sn_IR_CON)
     {
         setSn_IR(SOCK_STRATUM, Sn_IR_CON);/*Sn_IR的第0位置1*/
     }
-	//debug32("send start.\n");
-	//hexdump((const uint8 *)buffer,2048);
 	send(SOCK_STRATUM,(uint8*)buffer,strlen(buffer),0);
-	//debug32("send ok.\n");
 	authorize_id = pkg_id;
-	//hexdump((const uint8 *)buffer,2048);
 	return 0;
 }
 
-int32 send_submit()
+int32 send_submit(struct mm_work *mw, uint32 nonce2, uint32 ntime, uint32 nonce)
 {
+	pkg_id++;
+	memset(buffer,0,BUFFER_SIZE);
+	m_sprintf(buffer,"{\"params\": [\"%s\", \"%s\",\"%08x\", \"%08x\", \"%08x\"], \"id\": %d, \"method\": \"mining.submit\"}\n", g_worker_name,mw->job_id,nonce2,ntime,nonce,pkg_id);
+	debug32("%s",buffer);
+	if(getSn_IR(SOCK_STRATUM) & Sn_IR_CON)
+    {
+        setSn_IR(SOCK_STRATUM, Sn_IR_CON);/*Sn_IR的第0位置1*/
+    }
+	send(SOCK_STRATUM,(uint8*)buffer,strlen(buffer),0);
 	submit_id = pkg_id;
 	return 0;
 }
@@ -135,6 +135,7 @@ int32 recv_stratum()
 		//debug32("\n******************recv_stratum***json_end:%d******************\n",json_end);	
         recv(SOCK_STRATUM,(uint8*)buffer+json_end,len);/*W5200接收来自Sever的数据*/
 		//hexdump((const uint8 *)buffer,2048);
+		//debug32(buffer);
 		len+=json_end;
 		json_begin = json_end = 0;
 		while(1){
@@ -144,7 +145,7 @@ int32 recv_stratum()
 				buffer[json_end] = '\0';
 				//debug32("end: %d\n",json_end);
 				json_len = json_end - json_begin;
-				//debug32("ready to parse:%s\n",buffer+json_begin);
+				debug32("ready to parse:%s\n",buffer+json_begin);
 				parse_stratum(buffer+json_begin);
 				json_begin = json_end + 1;
 			}
@@ -171,7 +172,7 @@ int32 recv_stratum()
 	return 0;
 }
 
-void hex2bin(uint8 * bin,uint8 * hex,int32 bin_len){
+static void hex2bin(uint8 * bin,uint8 * hex,int32 bin_len){
 	int i;
 	char hex_str[3] = "\0\0\0";
 	for(i=0;i<bin_len;i++){
@@ -180,13 +181,21 @@ void hex2bin(uint8 * bin,uint8 * hex,int32 bin_len){
 	}
 }
 
+/*static void swap_int32(uint8* p){
+	uint8 buff[4];
+	memcpy(buff,p,4);
+	p[0] = buff[3];
+	p[1] = buff[2];
+	p[2] = buff[1];
+	p[3] = buff[0];
+}*/
+
 int32 parse_nofify(const int8 * json)
 {
 	int32 idx = 0;
 	int32 prehash_idx;
 	int32 len;
 	int32 offset = 0;
-	//char hex_str[3] = "\0\0\0";
 	int32 i;
 
 	notify_cnt++;
@@ -195,9 +204,7 @@ int32 parse_nofify(const int8 * json)
 		if(idx >= je)
 			break;
 		if(strncmp(json+jt[idx].start,"params",6) == 0){
-			//debug32("params:%d\n",idx);
 			idx++;
-			//debug32("%s\n",json+jt[idx].start);
 			idx++;
 			break;
 		}
@@ -221,10 +228,13 @@ int32 parse_nofify(const int8 * json)
 	
 	/*extra_nonce1*/
 	memcpy(mm_work_ptr->coinbase+offset,(uint8 *)&nonce1_bin,4);
+	//swap_int32(mm_work_ptr->coinbase+offset);
 	offset += 4;
 	
 	/*extra_nonce2*/
 	memset(mm_work_ptr->coinbase+offset,0,4);
+	//swap_int32(mm_work_ptr->coinbase+offset);
+	mm_work_ptr->nonce2_offset = offset;
 	offset += 4;
 	
 	/*coinb2*/
@@ -247,8 +257,9 @@ int32 parse_nofify(const int8 * json)
 		idx++;
 	}
 	
-	/*version*/
+	/*version #LITTLE ENDIAN# */
 	hex2bin(mm_work_ptr->header,(uint8*)json+jt[idx].start,4);
+	//swap_int32(mm_work_ptr->header);
 	offset = 4;
 	idx++;
 	
@@ -261,14 +272,20 @@ int32 parse_nofify(const int8 * json)
 	mm_work_ptr->merkle_offset = offset;
 	offset += 32;
 	
-	/*ntime*/
-	offset += 4;
-	
-	/*nbits*/
+	/*ntime #BIG ENDIAN#*/
+	idx++;
 	len = (jt[idx].end - jt[idx].start)/2;
 	hex2bin(mm_work_ptr->header+offset,(uint8*)json+jt[idx].start,len);
+	//swap_int32(mm_work_ptr->header+offset);
 	offset += len;
-	idx++;
+	
+	/*nbits #BIT ENDIAN#*/
+	idx--;
+	len = (jt[idx].end - jt[idx].start)/2;
+	hex2bin(mm_work_ptr->header+offset,(uint8*)json+jt[idx].start,len);
+	//swap_int32(mm_work_ptr->header+offset);
+	offset += len;
+	//idx++;
 	
 	/*nonce*/
 	offset += 4;
@@ -277,15 +294,71 @@ int32 parse_nofify(const int8 * json)
 	mm_work_ptr->header[offset+3] = 0x80;
 	mm_work_ptr->header[124] = 0x80;
 	mm_work_ptr->header[125] = 0x02;
+	// mm_work_ptr->header[offset] = 0x80;
+	// mm_work_ptr->header[126] = 0x02;
+	// mm_work_ptr->header[127] = 0x80;
 
-	hexdump((uint8*)mm_work_ptr->header,128);
+	//hexdump((uint8*)mm_work_ptr->header,128);
 	
 	return 0;
 }
 
+static void shift_32bytes(uint8 * target)
+{
+	int32 i;
+	for(i=0;i<32;i++){
+		target[i] = target[i+1]&0x01?(0x80|(target[i] >> 1)):(target[i] >> 1);
+	}
+}
+/*
+static void add_32bytes(uint8 * op1,uint8 * op2)
+{
+	int32 i;
+	uint8 cf = 0;
+	uint16 mid;
+	for(i=31;i>=0;i--){
+		mid = (uint16)op1[i] + (uint16)op2[i] + (uint16)cf;
+		op1[i] = (uint8)mid;
+		cf = mid>>8;
+	}
+}*/
+
+/* Can only deal with diff = pow(2,n) */
+static void calc_target(uint8 * target,uint32 diff)
+{
+	int32 i=0;
+	int32 loop;
+	memcpy(target,g_diff1_target,32);
+	while(diff){
+		if( (diff & 0x00000001) == 0x00000001)
+			for(i=0;i<loop;i++){
+				shift_32bytes(target);
+			}
+		diff = diff>>1;
+		loop++;
+	}
+}
+
 int32 parse_diff(const int8 * json)
 {
-	debug32("diff\n");
+	uint32 diff;
+	int32 idx = 0;
+	while(1){
+		if(idx >= je)
+			break;
+		if(strncmp(json+jt[idx].start,"params",6) == 0){
+			idx++;
+			idx++;
+			break;
+		}
+		idx++;
+	}
+	*(char*)(json+jt[idx].end)=0;
+	diff = ATOI((char *)json+jt[idx].start,10);
+	//diff = 256;
+	calc_target(mm_work_ptr->target,diff);
+	hexdump(mm_work_ptr->target,32);
+	debug32("stratum diff:%d\n",diff);
 	return 0;
 }
 
@@ -324,8 +397,9 @@ int32 parse_stratum(const int8 * json)
 				g_new_stratum = 1;
 				return parse_nofify(json);
 			}
-			if(strncmp(json+jt[idx+1].start,"mining.diff",11) == 0)
+			if(strncmp(json+jt[idx+1].start,"mining.set_difficulty",21) == 0){
 				return parse_diff(json);
+			}
 		}
 		if((strncmp(json+jt[idx].start,"id",2) == 0)&&(strncmp(json+jt[idx+1].start,"n",1) != 0)){
 			for(i=jt[idx+1].start;i<jt[idx+1].end;i++){
@@ -351,7 +425,7 @@ int32 parse_stratum(const int8 * json)
 				break;
 			}
 			else if(recv_pkg_id == submit_id){
-				
+				debug32("submit response.\n");
 			}
 			break;
 		}
