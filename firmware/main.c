@@ -48,22 +48,10 @@ uint8 gw[4]={192,168,2,1};/*定义Gateway变量*/
 uint8 dip[4]={192,168,2,116};
 uint8 DEFAULT_DNS[4] = {192,168,2,1};
 uint8 RIP[4] = {182,92,180,216};
-uint8 DOMAIN[] = "us1.ghash.io";
+uint8 DOMAIN[] = "stratum.f2pool.com";
 //uint8 DOMAIN[] = "182.92.180.216";
 
-//static uint8_t g_pkg[HRTO_P_COUNT];
-//static uint8_t g_act[HRTO_P_COUNT];
 int8 g_new_stratum = 0;
-
-//static int g_asic_freq   = BE200_DEFAULT_FREQ;
-//static int g_cur_mm_idx  = 0;
-//static int g_temp_high   = 60;
-//static int g_temp_normal = 50;
-static int g_working = 0;
-//static struct mm_work g_mm_works[MM_BUF_NUM];
-
-//static uint32_t g_nonce2_offset = 0;
-//static uint32_t g_nonce2_range  = 0xffffffff;
 
 #define BE200_RET_RINGBUFFER_SIZE_RX 64
 #define BE200_RET_RINGBUFFER_MASK_RX (BE200_RET_RINGBUFFER_SIZE_RX-1)
@@ -71,27 +59,10 @@ static int g_working = 0;
 static volatile unsigned int ret_produce = 0;
 static volatile unsigned int ret_consume = 0;
 
-//static struct chip_status miner_status[CHIP_NUMBER];
-//static struct be200_result be200_result_buff[BE200_RET_RINGBUFFER_SIZE_RX];
 static volatile unsigned int be200_ret_produce = 0;
 static volatile unsigned int be200_ret_consume = 0;
 
 //int8 buffer[BUFFER_SIZE];/*定义一个2KB的缓存*
-
-uint8 merkle_branch[] = {
-0x11,0x11,0x11,0x11,0x11,0x11,0x11,0x11,0x11,0x11,0x11,0x11,0x11,0x11,0x11,0x11,
-0x22,0x22,0x22,0x22,0x22,0x22,0x22,0x22,0x22,0x22,0x22,0x22,0x22,0x22,0x22,0x22,
-0x33,0x33,0x33,0x33,0x33,0x33,0x33,0x33,0x33,0x33,0x33,0x33,0x33,0x33,0x33,0x33,
-0x44,0x44,0x44,0x44,0x44,0x44,0x44,0x44,0x44,0x44,0x44,0x44,0x44,0x44,0x44,0x44,
-0x55,0x55,0x55,0x55,0x55,0x55,0x55,0x55,0x55,0x55,0x55,0x55,0x55,0x55,0x55,0x55,
-0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,
-0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,
-0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,
-0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,
-0x12,0x34,0x56,0x78,0x90,0xAB,0xCD,0xEF,0x12,0x34,0x56,0x78,0x90,0xAB,0xCD,0xEF,
-0x12,0x34,0x56,0x78,0x90,0xAB,0xCD,0xEF,0x12,0x34,0x56,0x78,0x90,0xAB,0xCD,0xEF,
-};
-int a = 0x11223344;
 
 void W5500_Init(void)
 {
@@ -125,9 +96,7 @@ uint32_t be200_send_work(uint8_t idx,struct work *w)
 		uart_write(w->data[i]);
 	}
 	last = uart_read();
-	
-	//debug32("\nw->data\n");
-	//hexdump(w->data,49);
+
 	return 1;
 }
 
@@ -209,17 +178,9 @@ int main(int argv,char * * argc)
 	uart1_init();   	
 
 	W5500_Init();
-	debug32("Init done.\n");
 	setRTR(2000);//设置溢出时间值
 	setRCR(3);//设置最大重新发送次数
 	sysinit(txsize, rxsize);//初始化8个socket
-	
-	/*union{
-		uint32 i;
-		uint8 s[4];
-	} c;
-	c.i=0x12345678;
-	debug32("%s\n",(0x12==c.s[0])?"Big":"Little");*/
 	
 	mm_work_ptr = &g_mm_works[0];
 	memcpy(mm_work_ptr->target,g_diff256_target,32);
@@ -227,15 +188,15 @@ int main(int argv,char * * argc)
 		debug32("parse ok.\n");
 	else
 		debug32("parse failed.\n");
+	
 	connect_poll(RIP,3333);
-	//send_authorize();
+	
 	send_subscribe();
 	send_authorize();
-	g_working = 1; 
 	
 	uart_writecmd(C_LPO|idx);
 	uart_writecmd(C_DIF|0x00);
-	
+	reset_hashrate();
 	while(1){
 		recv_stratum(&g_mm_works[0]);
 		wdg_feed_sec(60);
@@ -244,18 +205,8 @@ int main(int argv,char * * argc)
 		if(last == A_YES){
 			nonce_check = get_result(idx,&ntime_submit,&nonce_submit,&nonce2_submit); 
 			if(nonce_check == NONCE_VALID){
-				/*debug32("\ncoinbase\n");
-				hexdump(mm_work_ptr->coinbase,160);
-				debug32("\nmerkle_root\n");
-				hexdump(mm_work_ptr->header + 36,32);
-				debug32("\nheader\n");
-				hexdump(mm_work_ptr->header,128);
-				debug32("\nwork->header\n");
-				hexdump(g_works[0].header,128);
-				debug32("\nresult\n");
-				hexdump((uint8*)result,48);
-				debug32("\nVALID NONCE:ntime %08x,nonce %08x,nonce2 %08x\n",ntime_submit,nonce_submit,nonce2_submit);*/
 				send_submit(mm_work_ptr, nonce2_submit, ntime_submit, bswap_32(nonce_submit));
+				calc_hashrate();
 			}
 			else if(nonce_check == NONCE_DIFF)
 				;//debug32("\nLESS DIFF NONCE\n");
