@@ -5,9 +5,22 @@ NET "ex_clk_o" LOC = F6;
 #NET "INT" LOC = R7;
 
 # UART
-NET "uartSIN"  LOC = E7;
-NET "uartSOUT" LOC = C7;
-NET "uartSOUT" PULLUP;
+NET "uart1SIN"  LOC = E7;
+NET "uart1SOUT" LOC = C7;
+NET "uart1SOUT" PULLUP;
+
+NET "uart2SIN"  LOC = A9;
+NET "uart2SOUT" LOC = D8;
+NET "uart2SOUT" PULLUP;
+
+NET "uart3SIN"  LOC = L1;
+NET "uart3SOUT" LOC = M1;
+NET "uart3SOUT" PULLUP;
+
+
+NET "uart4SIN"  LOC = K2;
+NET "uart4SOUT" LOC = K1;
+NET "uart4SOUT" PULLUP;
 
 # UART debug
 NET "uart_debugSIN" LOC = T15;
@@ -20,6 +33,13 @@ NET "w5500_spi_SS_N_MASTER" LOC = D6;
 NET "w5500_spi_SCLK_MASTER" LOC = C6;
 NET "w5500_spi_RESET" LOC = A4;
 NET "w5500_INT" LOC = A6;
+
+NET "flash_spi_MISO_MASTER" LOC = G1;
+NET "flash_spi_MOSI_MASTER" LOC = M2;
+NET "flash_spi_SS_N_MASTER" LOC = F1;
+NET "flash_spi_SCLK_MASTER" LOC = J1;
+#NET "w5500_spi_RESET" LOC = A4; 
+#NET "w5500_INT" LOC = A6;
 
 NET "INT" LOC = F2;
 

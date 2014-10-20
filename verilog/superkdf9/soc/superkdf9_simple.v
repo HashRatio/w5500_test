@@ -76,8 +76,17 @@ module mm (
 
 , INT
 
-, uartSIN
-, uartSOUT
+, uart1SIN
+, uart1SOUT
+
+, uart2SIN
+, uart2SOUT
+
+, uart3SIN
+, uart3SOUT
+
+, uart4SIN
+, uart4SOUT
 
 , uart_debugSIN
 , uart_debugSOUT
@@ -88,6 +97,13 @@ module mm (
 , w5500_spi_SCLK_MASTER
 , w5500_spi_RESET
 , w5500_INT
+
+, flash_spi_MISO_MASTER
+, flash_spi_MOSI_MASTER
+, flash_spi_SS_N_MASTER
+, flash_spi_SCLK_MASTER
+, flash_spi_RESET
+, flash_INT
 
 //, LED
 );
@@ -165,15 +181,45 @@ wire   superkdf9DEBUG_RTY_O;
 wire superkdf9DEBUG_en;
 wire [31:0] superkdf9interrupt_n;
 
-wire [7:0] uartUART_DAT_O;
-wire   uartUART_ACK_O;
-wire   uartUART_ERR_O;
-wire   uartUART_RTY_O;
-wire uartUART_en;
-wire uartINTR;
+wire [7:0] uart1UART_DAT_O;
+wire   uart1UART_ACK_O;
+wire   uart1UART_ERR_O;
+wire   uart1UART_RTY_O;
+wire uart1UART_en;
+wire uart1INTR;
 
-input  uartSIN;
-inout  uartSOUT;
+wire [7:0] uart2UART_DAT_O;
+wire   uart2UART_ACK_O;
+wire   uart2UART_ERR_O;
+wire   uart2UART_RTY_O;
+wire uart2UART_en;
+wire uart2INTR;
+
+wire [7:0] uart3UART_DAT_O;
+wire   uart3UART_ACK_O;
+wire   uart3UART_ERR_O;
+wire   uart3UART_RTY_O;
+wire uart3UART_en;
+wire uart3INTR;
+
+wire [7:0] uart4UART_DAT_O;
+wire   uart4UART_ACK_O;
+wire   uart4UART_ERR_O;
+wire   uart4UART_RTY_O;
+wire uart4UART_en;
+wire uart4INTR;
+
+input  uart1SIN;
+inout  uart1SOUT;
+
+input  uart2SIN;
+inout  uart2SOUT;
+
+input  uart3SIN;
+inout  uart3SOUT;
+
+input  uart4SIN;
+inout  uart4SOUT;
 
 output  INT;
 
@@ -200,6 +246,20 @@ output  w5500_spi_SS_N_MASTER;
 output  w5500_spi_SCLK_MASTER;
 output w5500_spi_RESET;
 
+input flash_INT;
+//w5500 spi
+wire [31:0] flash_spi_SPI_DAT_O;
+wire   flash_spi_SPI_ACK_O;
+wire   flash_spi_SPI_ERR_O;
+wire   flash_spi_SPI_RTY_O;
+wire flash_spi_SPI_en;
+wire flash_spi_SPI_INT_O;
+input  flash_spi_MISO_MASTER;
+output  flash_spi_MOSI_MASTER;
+output  flash_spi_SS_N_MASTER;
+output  flash_spi_SCLK_MASTER;
+output flash_spi_RESET;
+
 //sha core
 wire [31:0] shaSHA_DAT_O;
 wire   shaSHA_ACK_O;
@@ -215,7 +275,6 @@ wire        twiTWI_RTY_O;
 wire        twiTWI_en;
 wire        TWI_SCL_O ;
 wire        TWI_SDA_OEN ;
-
 
 // Enable the FT232 and HUB
 
@@ -285,34 +344,50 @@ arbiter (
 .reset (sys_reset));
 
 assign SHAREDBUS_DAT_O =
-uartUART_en ? {4{uartUART_DAT_O[7:0]}} :
+uart1UART_en ? {4{uart1UART_DAT_O[7:0]}} :
+uart2UART_en ? {4{uart2UART_DAT_O[7:0]}} :
+uart3UART_en ? {4{uart3UART_DAT_O[7:0]}} :
+uart4UART_en ? {4{uart4UART_DAT_O[7:0]}} :
 uart_debugUART_en ? {4{uart_debugUART_DAT_O[7:0]}} :
 shaSHA_en ? shaSHA_DAT_O :
 w5500_spi_SPI_en ? w5500_spi_SPI_DAT_O :
+flash_spi_SPI_en ? flash_spi_SPI_DAT_O :
 twiTWI_en ? twiTWI_DAT_O :
 0;
 
 assign SHAREDBUS_ERR_O = SHAREDBUS_CYC_I & !(
-(!uartUART_ERR_O & uartUART_en) |
+(!uart1UART_ERR_O & uart1UART_en) |
+(!uart2UART_ERR_O & uart2UART_en) |
+(!uart3UART_ERR_O & uart3UART_en) |
+(!uart4UART_ERR_O & uart4UART_en) |
 (!uart_debugUART_ERR_O & uart_debugUART_en) |
 (!shaSHA_ERR_O & shaSHA_en ) |
 (!w5500_spi_SPI_ERR_O & w5500_spi_SPI_en) |
+(!flash_spi_SPI_ERR_O & flash_spi_SPI_en) |
 (!twiTWI_ERR_O & twiTWI_en ) |
 0);
 
 assign SHAREDBUS_ACK_O =
-uartUART_en ? uartUART_ACK_O :
+uart1UART_en ? uart1UART_ACK_O :
+uart2UART_en ? uart2UART_ACK_O :
+uart3UART_en ? uart3UART_ACK_O :
+uart4UART_en ? uart4UART_ACK_O :
 uart_debugUART_en ? uart_debugUART_ACK_O :
 shaSHA_en ? shaSHA_ACK_O :
 w5500_spi_SPI_en ? w5500_spi_SPI_ACK_O :
+flash_spi_SPI_en ? flash_spi_SPI_ACK_O :
 twiTWI_en ? twiTWI_ACK_O :
 0;
 
 assign SHAREDBUS_RTY_O =
-uartUART_en ? uartUART_RTY_O :
+uart1UART_en ? uart1UART_RTY_O :
+uart2UART_en ? uart2UART_RTY_O :
+uart3UART_en ? uart3UART_RTY_O :
+uart4UART_en ? uart4UART_RTY_O :
 uart_debugUART_en ? uart_debugUART_RTY_O :
 shaSHA_en ? shaSHA_RTY_O :
 w5500_spi_SPI_en ? w5500_spi_SPI_RTY_O :
+flash_spi_SPI_en ? flash_spi_SPI_RTY_O :
 twiTWI_en ? twiTWI_RTY_O :
 0;
 
@@ -453,19 +528,60 @@ bram #(
 // }}}
 
 
-wire [7:0] uartUART_DAT_I;
-assign uartUART_DAT_I = ((
+wire [7:0] uart1UART_DAT_I;
+assign uart1UART_DAT_I = ((
 	SHAREDBUS_ADR_I[1:0] == 2'b00) ? SHAREDBUS_DAT_I[31:24] : ((
 	SHAREDBUS_ADR_I[1:0] == 2'b01) ? SHAREDBUS_DAT_I[23:16] : ((
 	SHAREDBUS_ADR_I[1:0] == 2'b10) ? SHAREDBUS_DAT_I[15:8] : SHAREDBUS_DAT_I[7:0])));
-wire uartUART_SEL_I;
-assign uartUART_SEL_I = ((
+wire uart1UART_SEL_I;
+assign uart1UART_SEL_I = ((
 	SHAREDBUS_ADR_I[1:0] == 2'b00) ? SHAREDBUS_SEL_I[3] : ((
 	SHAREDBUS_ADR_I[1:0] == 2'b01) ? SHAREDBUS_SEL_I[2] : ((
 	SHAREDBUS_ADR_I[1:0] == 2'b10) ? SHAREDBUS_SEL_I[1] : SHAREDBUS_SEL_I[0])));
-assign uartUART_en = (SHAREDBUS_ADR_I[31:4] == 28'b1000000000000000000000010000);//Device address 0x80000100
-wire uartSOUT_w ;
-assign uartSOUT = uartSOUT_w ? 1'bz : 1'b0;
+assign uart1UART_en = (SHAREDBUS_ADR_I[31:4] == 28'b1000000000000000000000010000);//Device address 0x80000100
+wire uart1SOUT_w ;
+assign uart1SOUT = uart1SOUT_w ? 1'bz : 1'b0;
+
+
+wire [7:0] uart2UART_DAT_I;
+assign uart2UART_DAT_I = ((
+	SHAREDBUS_ADR_I[1:0] == 2'b00) ? SHAREDBUS_DAT_I[31:24] : ((
+	SHAREDBUS_ADR_I[1:0] == 2'b01) ? SHAREDBUS_DAT_I[23:16] : ((
+	SHAREDBUS_ADR_I[1:0] == 2'b10) ? SHAREDBUS_DAT_I[15:8] : SHAREDBUS_DAT_I[7:0])));
+wire uart2UART_SEL_I;
+assign uart2UART_SEL_I = ((
+	SHAREDBUS_ADR_I[1:0] == 2'b00) ? SHAREDBUS_SEL_I[3] : ((
+	SHAREDBUS_ADR_I[1:0] == 2'b01) ? SHAREDBUS_SEL_I[2] : ((
+	SHAREDBUS_ADR_I[1:0] == 2'b10) ? SHAREDBUS_SEL_I[1] : SHAREDBUS_SEL_I[0])));
+assign uart2UART_en = (SHAREDBUS_ADR_I[31:4] == 28'b1000000000000000000010000000);//Device address 0x80000100
+wire uart2SOUT_w ;
+
+wire [7:0] uart3UART_DAT_I;
+assign uart3UART_DAT_I = ((
+	SHAREDBUS_ADR_I[1:0] == 2'b00) ? SHAREDBUS_DAT_I[31:24] : ((
+	SHAREDBUS_ADR_I[1:0] == 2'b01) ? SHAREDBUS_DAT_I[23:16] : ((
+	SHAREDBUS_ADR_I[1:0] == 2'b10) ? SHAREDBUS_DAT_I[15:8] : SHAREDBUS_DAT_I[7:0])));
+wire uart3UART_SEL_I;
+assign uart3UART_SEL_I = ((
+	SHAREDBUS_ADR_I[1:0] == 2'b00) ? SHAREDBUS_SEL_I[3] : ((
+	SHAREDBUS_ADR_I[1:0] == 2'b01) ? SHAREDBUS_SEL_I[2] : ((
+	SHAREDBUS_ADR_I[1:0] == 2'b10) ? SHAREDBUS_SEL_I[1] : SHAREDBUS_SEL_I[0])));
+assign uart3UART_en = (SHAREDBUS_ADR_I[31:4] == 28'b1000000000000000000010010000);//Device address 0x80000100
+wire uart3SOUT_w ;
+
+
+wire [7:0] uart4UART_DAT_I;
+assign uart4UART_DAT_I = ((
+	SHAREDBUS_ADR_I[1:0] == 2'b00) ? SHAREDBUS_DAT_I[31:24] : ((
+	SHAREDBUS_ADR_I[1:0] == 2'b01) ? SHAREDBUS_DAT_I[23:16] : ((
+	SHAREDBUS_ADR_I[1:0] == 2'b10) ? SHAREDBUS_DAT_I[15:8] : SHAREDBUS_DAT_I[7:0])));
+wire uart4UART_SEL_I;
+assign uart4UART_SEL_I = ((
+	SHAREDBUS_ADR_I[1:0] == 2'b00) ? SHAREDBUS_SEL_I[3] : ((
+	SHAREDBUS_ADR_I[1:0] == 2'b01) ? SHAREDBUS_SEL_I[2] : ((
+	SHAREDBUS_ADR_I[1:0] == 2'b10) ? SHAREDBUS_SEL_I[1] : SHAREDBUS_SEL_I[0])));
+assign uart4UART_en = (SHAREDBUS_ADR_I[31:4] == 28'b1000000000000000000010100000);//Device address 0x80000100
+wire uart4SOUT_w ;
 
 `ifndef UART_PRO_EN
 uart_core
@@ -483,55 +599,247 @@ uart_core
 .LCR_PARITY_STICK(0),
 .LCR_SET_BREAK(0),
 .FIFO(1))
- uart(
+ uart1(
 .UART_ADR_I(SHAREDBUS_ADR_I[3:0]),
-.UART_DAT_I(uartUART_DAT_I[7:0]),
-.UART_DAT_O(uartUART_DAT_O[7:0]),
-.UART_SEL_I(uartUART_SEL_I),
+.UART_DAT_I(uart1UART_DAT_I[7:0]),
+.UART_DAT_O(uart1UART_DAT_O[7:0]),
+.UART_SEL_I(uart1UART_SEL_I),
 .UART_WE_I(SHAREDBUS_WE_I),
-.UART_ACK_O(uartUART_ACK_O),
-.UART_ERR_O(uartUART_ERR_O),
-.UART_RTY_O(uartUART_RTY_O),
+.UART_ACK_O(uart1UART_ACK_O),
+.UART_ERR_O(uart1UART_ERR_O),
+.UART_RTY_O(uart1UART_RTY_O),
 .UART_CTI_I(SHAREDBUS_CTI_I),
 .UART_BTE_I(SHAREDBUS_BTE_I),
 .UART_LOCK_I(SHAREDBUS_LOCK_I),
-.UART_CYC_I(SHAREDBUS_CYC_I & uartUART_en),
-.UART_STB_I(SHAREDBUS_STB_I & uartUART_en),
-.SIN(uartSIN),
-.SOUT(uartSOUT_w),
-.RXRDY_N(uartRXRDY_N),
-.TXRDY_N(uartTXRDY_N),
-.INTR(uartINTR),
+.UART_CYC_I(SHAREDBUS_CYC_I & uart1UART_en),
+.UART_STB_I(SHAREDBUS_STB_I & uart1UART_en),
+.SIN(uart1SIN),
+.SOUT(uart1SOUT_w),
+.RXRDY_N(uart1RXRDY_N),
+.TXRDY_N(uart1TXRDY_N),
+.INTR(uart1INTR),
 .CLK(clk_i), .RESET(sys_reset));
 `else
-uart_pro U_uart_pro(
+uart_pro U_uart_pro1(
 	// system clock and reset
 /*input         */.CLK_I      (clk_i                        ) ,
 /*input         */.RST_I      (sys_reset                    ) ,
 
 // wishbone interface signals
-/*input         */.PRO_CYC_I  (SHAREDBUS_CYC_I & uartUART_en) ,//NC
-/*input         */.PRO_STB_I  (SHAREDBUS_STB_I & uartUART_en) ,
+/*input         */.PRO_CYC_I  (SHAREDBUS_CYC_I & uart1UART_en) ,//NC
+/*input         */.PRO_STB_I  (SHAREDBUS_STB_I & uart1UART_en) ,
 /*input         */.PRO_WE_I   (SHAREDBUS_WE_I               ) ,
 /*input         */.PRO_LOCK_I (SHAREDBUS_LOCK_I             ) ,//NC
 /*input  [2:0]  */.PRO_CTI_I  (SHAREDBUS_CTI_I              ) ,//NC
 /*input  [1:0]  */.PRO_BTE_I  (SHAREDBUS_BTE_I              ) ,//NC
 /*input  [5:0]  */.PRO_ADR_I  (SHAREDBUS_ADR_I[3:0]         ) ,
-/*input  [31:0] */.PRO_DAT_I  (uartUART_DAT_I[7:0]          ) ,
-/*input  [3:0]  */.PRO_SEL_I  (uartUART_SEL_I               ) ,
-/*output reg    */.PRO_ACK_O  (uartUART_ACK_O               ) ,
-/*output        */.PRO_ERR_O  (uartUART_ERR_O               ) ,//const 0
-/*output        */.PRO_RTY_O  (uartUART_RTY_O               ) ,//const 0
-/*output [31:0] */.PRO_DAT_O  (uartUART_DAT_O[7:0]          ) ,
+/*input  [31:0] */.PRO_DAT_I  (uart1UART_DAT_I[7:0]          ) ,
+/*input  [3:0]  */.PRO_SEL_I  (uart1UART_SEL_I               ) ,
+/*output reg    */.PRO_ACK_O  (uart1UART_ACK_O               ) ,
+/*output        */.PRO_ERR_O  (uart1UART_ERR_O               ) ,//const 0
+/*output        */.PRO_RTY_O  (uart1UART_RTY_O               ) ,//const 0
+/*output [31:0] */.PRO_DAT_O  (uart1UART_DAT_O[7:0]          ) ,
 
 //Uart Pro interface
-/*input         */.PRO_RX     (uartSIN                      ) ,
-/*output        */.PRO_TX     (uartSOUT_w                   ) ,
-/*output        */.PRO_INT    (uartINTR                     )
+/*input         */.PRO_RX     (uart1SIN                      ) ,
+/*output        */.PRO_TX     (uart1SOUT_w                   ) ,
+/*output        */.PRO_INT    (uart1INTR                     )
 );
 `endif
 
+`ifndef UART_PRO_EN
+uart_core
+#(
+.UART_WB_DAT_WIDTH(8),
+.UART_WB_ADR_WIDTH(4),
+.CLK_IN_MHZ(`MM_CLK_IN_MHZ),
+.BAUD_RATE(115200),
+.STDOUT_SIM(0),
+.STDOUT_SIMFAST(0),
+.LCR_DATA_BITS(8),
+.LCR_STOP_BITS(1),
+.LCR_PARITY_ENABLE(0),
+.LCR_PARITY_ODD(0),
+.LCR_PARITY_STICK(0),
+.LCR_SET_BREAK(0),
+.FIFO(1))
+ uart2(
+.UART_ADR_I(SHAREDBUS_ADR_I[3:0]),
+.UART_DAT_I(uart2UART_DAT_I[7:0]),
+.UART_DAT_O(uart2UART_DAT_O[7:0]),
+.UART_SEL_I(uart2UART_SEL_I),
+.UART_WE_I(SHAREDBUS_WE_I),
+.UART_ACK_O(uart2UART_ACK_O),
+.UART_ERR_O(uart2UART_ERR_O),
+.UART_RTY_O(uart2UART_RTY_O),
+.UART_CTI_I(SHAREDBUS_CTI_I),
+.UART_BTE_I(SHAREDBUS_BTE_I),
+.UART_LOCK_I(SHAREDBUS_LOCK_I),
+.UART_CYC_I(SHAREDBUS_CYC_I & uart2UART_en),
+.UART_STB_I(SHAREDBUS_STB_I & uart2UART_en),
+.SIN(uart2SIN),
+.SOUT(uart2SOUT_w),
+.RXRDY_N(uart2RXRDY_N),
+.TXRDY_N(uart2TXRDY_N),
+.INTR(uart2INTR),
+.CLK(clk_i), .RESET(sys_reset));
+`else
+uart_pro U_uart_pro2(
+	// system clock and reset
+/*input         */.CLK_I      (clk_i                        ) ,
+/*input         */.RST_I      (sys_reset                    ) ,
+
+// wishbone interface signals
+/*input         */.PRO_CYC_I  (SHAREDBUS_CYC_I & uart2UART_en) ,//NC
+/*input         */.PRO_STB_I  (SHAREDBUS_STB_I & uart2UART_en) ,
+/*input         */.PRO_WE_I   (SHAREDBUS_WE_I               ) ,
+/*input         */.PRO_LOCK_I (SHAREDBUS_LOCK_I             ) ,//NC
+/*input  [2:0]  */.PRO_CTI_I  (SHAREDBUS_CTI_I              ) ,//NC
+/*input  [1:0]  */.PRO_BTE_I  (SHAREDBUS_BTE_I              ) ,//NC
+/*input  [5:0]  */.PRO_ADR_I  (SHAREDBUS_ADR_I[3:0]         ) ,
+/*input  [31:0] */.PRO_DAT_I  (uart2UART_DAT_I[7:0]          ) ,
+/*input  [3:0]  */.PRO_SEL_I  (uart2UART_SEL_I               ) ,
+/*output reg    */.PRO_ACK_O  (uart2UART_ACK_O               ) ,
+/*output        */.PRO_ERR_O  (uart2UART_ERR_O               ) ,//const 0
+/*output        */.PRO_RTY_O  (uart2UART_RTY_O               ) ,//const 0
+/*output [31:0] */.PRO_DAT_O  (uart2UART_DAT_O[7:0]          ) ,
+
+//Uart Pro interface
+/*input         */.PRO_RX     (uart2SIN                      ) ,
+/*output        */.PRO_TX     (uart2SOUT_w                   ) ,
+/*output        */.PRO_INT    (uart2INTR                     )
+);
+`endif
 //assign gpioGPIO_en = (SHAREDBUS_ADR_I[31:4] == 28'b1000000000000000000000100000);//Device address 0x80000200
+
+`ifndef UART_PRO_EN
+uart_core
+#(
+.UART_WB_DAT_WIDTH(8),
+.UART_WB_ADR_WIDTH(4),
+.CLK_IN_MHZ(`MM_CLK_IN_MHZ),
+.BAUD_RATE(115200),
+.STDOUT_SIM(0),
+.STDOUT_SIMFAST(0),
+.LCR_DATA_BITS(8),
+.LCR_STOP_BITS(1),
+.LCR_PARITY_ENABLE(0),
+.LCR_PARITY_ODD(0),
+.LCR_PARITY_STICK(0),
+.LCR_SET_BREAK(0),
+.FIFO(1))
+ uart3(
+.UART_ADR_I(SHAREDBUS_ADR_I[3:0]),
+.UART_DAT_I(uart3UART_DAT_I[7:0]),
+.UART_DAT_O(uart3UART_DAT_O[7:0]),
+.UART_SEL_I(uart3UART_SEL_I),
+.UART_WE_I(SHAREDBUS_WE_I),
+.UART_ACK_O(uart3UART_ACK_O),
+.UART_ERR_O(uart3UART_ERR_O),
+.UART_RTY_O(uart3UART_RTY_O),
+.UART_CTI_I(SHAREDBUS_CTI_I),
+.UART_BTE_I(SHAREDBUS_BTE_I),
+.UART_LOCK_I(SHAREDBUS_LOCK_I),
+.UART_CYC_I(SHAREDBUS_CYC_I & uart3UART_en),
+.UART_STB_I(SHAREDBUS_STB_I & uart3UART_en),
+.SIN(uart3SIN),
+.SOUT(uart3SOUT_w),
+.RXRDY_N(uart3RXRDY_N),
+.TXRDY_N(uart3TXRDY_N),
+.INTR(uart3INTR),
+.CLK(clk_i), .RESET(sys_reset));
+`else
+uart_pro U_uart_pro3(
+	// system clock and reset
+/*input         */.CLK_I      (clk_i                        ) ,
+/*input         */.RST_I      (sys_reset                    ) ,
+
+// wishbone interface signals
+/*input         */.PRO_CYC_I  (SHAREDBUS_CYC_I & uart3UART_en) ,//NC
+/*input         */.PRO_STB_I  (SHAREDBUS_STB_I & uart3UART_en) ,
+/*input         */.PRO_WE_I   (SHAREDBUS_WE_I               ) ,
+/*input         */.PRO_LOCK_I (SHAREDBUS_LOCK_I             ) ,//NC
+/*input  [2:0]  */.PRO_CTI_I  (SHAREDBUS_CTI_I              ) ,//NC
+/*input  [1:0]  */.PRO_BTE_I  (SHAREDBUS_BTE_I              ) ,//NC
+/*input  [5:0]  */.PRO_ADR_I  (SHAREDBUS_ADR_I[3:0]         ) ,
+/*input  [31:0] */.PRO_DAT_I  (uart3UART_DAT_I[7:0]          ) ,
+/*input  [3:0]  */.PRO_SEL_I  (uart3UART_SEL_I               ) ,
+/*output reg    */.PRO_ACK_O  (uart3UART_ACK_O               ) ,
+/*output        */.PRO_ERR_O  (uart3UART_ERR_O               ) ,//const 0
+/*output        */.PRO_RTY_O  (uart3UART_RTY_O               ) ,//const 0
+/*output [31:0] */.PRO_DAT_O  (uart3UART_DAT_O[7:0]          ) ,
+
+//Uart Pro interface
+/*input         */.PRO_RX     (uart3SIN                      ) ,
+/*output        */.PRO_TX     (uart3SOUT_w                   ) ,
+/*output        */.PRO_INT    (uart3INTR                     )
+);
+`endif
+
+
+`ifndef UART_PRO_EN
+uart_core
+#(
+.UART_WB_DAT_WIDTH(8),
+.UART_WB_ADR_WIDTH(4),
+.CLK_IN_MHZ(`MM_CLK_IN_MHZ),
+.BAUD_RATE(115200),
+.STDOUT_SIM(0),
+.STDOUT_SIMFAST(0),
+.LCR_DATA_BITS(8),
+.LCR_STOP_BITS(1),
+.LCR_PARITY_ENABLE(0),
+.LCR_PARITY_ODD(0),
+.LCR_PARITY_STICK(0),
+.LCR_SET_BREAK(0),
+.FIFO(1))
+ uart4(
+.UART_ADR_I(SHAREDBUS_ADR_I[3:0]),
+.UART_DAT_I(uart4UART_DAT_I[7:0]),
+.UART_DAT_O(uart4UART_DAT_O[7:0]),
+.UART_SEL_I(uart4UART_SEL_I),
+.UART_WE_I(SHAREDBUS_WE_I),
+.UART_ACK_O(uart4UART_ACK_O),
+.UART_ERR_O(uart4UART_ERR_O),
+.UART_RTY_O(uart4UART_RTY_O),
+.UART_CTI_I(SHAREDBUS_CTI_I),
+.UART_BTE_I(SHAREDBUS_BTE_I),
+.UART_LOCK_I(SHAREDBUS_LOCK_I),
+.UART_CYC_I(SHAREDBUS_CYC_I & uart4UART_en),
+.UART_STB_I(SHAREDBUS_STB_I & uart4UART_en),
+.SIN(uart4SIN),
+.SOUT(uart4SOUT_w),
+.RXRDY_N(uart4RXRDY_N),
+.TXRDY_N(uart4TXRDY_N),
+.INTR(uart4INTR),
+.CLK(clk_i), .RESET(sys_reset));
+`else
+uart_pro U_uart_pro4(
+	// system clock and reset
+/*input         */.CLK_I      (clk_i                        ) ,
+/*input         */.RST_I      (sys_reset                    ) ,
+
+// wishbone interface signals
+/*input         */.PRO_CYC_I  (SHAREDBUS_CYC_I & uart4UART_en) ,//NC
+/*input         */.PRO_STB_I  (SHAREDBUS_STB_I & uart4UART_en) ,
+/*input         */.PRO_WE_I   (SHAREDBUS_WE_I               ) ,
+/*input         */.PRO_LOCK_I (SHAREDBUS_LOCK_I             ) ,//NC
+/*input  [2:0]  */.PRO_CTI_I  (SHAREDBUS_CTI_I              ) ,//NC
+/*input  [1:0]  */.PRO_BTE_I  (SHAREDBUS_BTE_I              ) ,//NC
+/*input  [5:0]  */.PRO_ADR_I  (SHAREDBUS_ADR_I[3:0]         ) ,
+/*input  [31:0] */.PRO_DAT_I  (uart4UART_DAT_I[7:0]          ) ,
+/*input  [3:0]  */.PRO_SEL_I  (uart4UART_SEL_I               ) ,
+/*output reg    */.PRO_ACK_O  (uart4UART_ACK_O               ) ,
+/*output        */.PRO_ERR_O  (uart4UART_ERR_O               ) ,//const 0
+/*output        */.PRO_RTY_O  (uart4UART_RTY_O               ) ,//const 0
+/*output [31:0] */.PRO_DAT_O  (uart4UART_DAT_O[7:0]          ) ,
+
+//Uart Pro interface
+/*input         */.PRO_RX     (uart4SIN                      ) ,
+/*output        */.PRO_TX     (uart4SOUT_w                   ) ,
+/*output        */.PRO_INT    (uart4INTR                     )
+);
+`endif
 
 wire [7:0] uart_debugUART_DAT_I;
 assign uart_debugUART_DAT_I = ((
@@ -620,6 +928,44 @@ spi
 .CLK_I(clk_i), .RST_I(sys_reset));
 
 
+wire [31:0] flash_spi_SPI_DAT_I;
+wire flash_spi_fake_cs;
+assign flash_spi_SPI_DAT_I = SHAREDBUS_DAT_I[31:0];
+wire [3:0] flash_spi_SPI_SEL_I;
+assign flash_spi_SPI_SEL_I = SHAREDBUS_SEL_I;
+assign flash_spi_SPI_en = (SHAREDBUS_ADR_I[31:8] == 24'b100000000000000000000111);//Device address 0x80000000
+spi
+#(
+.MASTER(1),
+.SLAVE_NUMBER(32'h1),
+.CLOCK_SEL(15),
+.CLKCNT_WIDTH(4),
+.INTERVAL_LENGTH(2),
+.DATA_LENGTH(8),
+.SHIFT_DIRECTION(0),
+.CLOCK_PHASE(0),
+.CLOCK_POLARITY(0))
+ flash_spi(
+.SPI_ADR_I(SHAREDBUS_ADR_I[31:0]),
+.SPI_DAT_I(flash_spi_SPI_DAT_I[31:0]),
+.SPI_DAT_O(flash_spi_SPI_DAT_O[31:0]),
+.SPI_SEL_I(flash_spi_SPI_SEL_I[3:0]),
+.SPI_WE_I(SHAREDBUS_WE_I),
+.SPI_ACK_O(flash_spi_SPI_ACK_O),
+.SPI_ERR_O(flash_spi_SPI_ERR_O),
+.SPI_RTY_O(flash_spi_SPI_RTY_O),
+.SPI_CTI_I(SHAREDBUS_CTI_I),
+.SPI_BTE_I(SHAREDBUS_BTE_I),
+.SPI_LOCK_I(SHAREDBUS_LOCK_I),
+.SPI_CYC_I(SHAREDBUS_CYC_I & flash_spi_SPI_en),
+.SPI_STB_I(SHAREDBUS_STB_I & flash_spi_SPI_en),
+.MISO_MASTER(flash_spi_MISO_MASTER),
+.MOSI_MASTER(flash_spi_MOSI_MASTER),
+.SS_N_MASTER(flash_spi_fake_cs),
+.SCLK_MASTER(flash_spi_SCLK_MASTER),
+.SPI_INT_O(flash_spi_SPI_INT_O),
+.CLK_I(clk_i), .RST_I(sys_reset));
+
 assign shaSHA_en = (SHAREDBUS_ADR_I[31:5] == 28'b100000000000000000000100000);//Device address 0x80000400
 sha sha256(
 // system clock and reset
@@ -650,6 +996,7 @@ wire [7:0] gpioGPIO_IN_w;
 wire [23:0] gpioGPIO_OUT_w;
 assign w5500_spi_RESET = gpioGPIO_OUT_w[0];
 assign w5500_spi_SS_N_MASTER = gpioGPIO_OUT_w[1];
+assign flash_spi_SS_N_MASTER = gpioGPIO_OUT_w[2];
 
 twi u_twi(
 // system clock and reset
@@ -687,18 +1034,18 @@ twi u_twi(
 /*input         */ .FAN_IN1     (FAN_IN1                     ) ,
 /*output        */ .TIME0_INT   (TIME0_INT                   ) ,
 /*output        */ .TIME1_INT   (TIME1_INT                   ) ,
-/*output [23:0] */ .GPIO_OUT    (gpioGPIO_OUT_w               ) ,
+/*output [23:0] */ .GPIO_OUT    (gpioGPIO_OUT_w              ) ,
 /*input  [7:0]  */ .GPIO_IN     (gpioGPIO_IN_w               )
 ) ;
 
-assign superkdf9interrupt_n[3] = !uartINTR ;
+assign superkdf9interrupt_n[3] = !uart1INTR ;
 assign superkdf9interrupt_n[1] = 1 ;
 assign superkdf9interrupt_n[0] = 1 ;
 assign superkdf9interrupt_n[4] = !uart_debugINTR ;
 assign superkdf9interrupt_n[2] = 1;
-assign superkdf9interrupt_n[5] = 1;
-assign superkdf9interrupt_n[6] = 1;
-assign superkdf9interrupt_n[7] = 1;
+assign superkdf9interrupt_n[5] = !uart2INTR;
+assign superkdf9interrupt_n[6] = !uart3INTR;
+assign superkdf9interrupt_n[7] = !uart4INTR;
 assign superkdf9interrupt_n[8] = 1;
 assign superkdf9interrupt_n[9] = 1;
 assign superkdf9interrupt_n[10] = 1;

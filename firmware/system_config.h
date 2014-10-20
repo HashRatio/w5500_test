@@ -28,6 +28,9 @@
 #define IRQ_UART		(0x00000008) /* 3 */
 #define IRQ_UARTDEBUG	(0x00000010) /* 4 */
 
+#define IRQ_UART2		(0x00000020) /* 5 */
+#define IRQ_UART3		(0x00000040) /* 6 */
+#define IRQ_UART4		(0x00000080) /* 7 */
 #define IRQ_TIMER0		(0x00000020) /* 5 */
 #define IRQ_TIMER1		(0x00000040) /* 6 */
 
@@ -42,9 +45,9 @@
 #define SHIFTER_BASE	(0x80000614)
 #define TIMER_BASE		(0x80000620)
 #define SPI1_BASE		(0x80000700)
-#define SPI2_BASE		(0x80000800)
-#define SPI3_BASE		(0x80000900)
-#define SPI4_BASE		(0x80000A00)
+#define UART2_BASE		(0x80000800)
+#define UART3_BASE		(0x80000900)
+#define UART4_BASE		(0x80000A00)
 #define SPI5_BASE		(0x80000B00)
 #define SPI6_BASE		(0x80000C00)
 #define SPI7_BASE		(0x80000D00)

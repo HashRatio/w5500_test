@@ -11,11 +11,17 @@
 
 void uart_test(void);
 void uart_init(void);
+void uart2_init(void);
+void uart3_init(void);
+void uart4_init(void);
 void uart_isr(void);
+void uart2_isr(void);
+void uart3_isr(void);
+void uart4_isr(void);
 int uart_read_nonblock(void);
-char uart_read(void);
-void uart_write(char c);
-void uart_writecmd(char c); 
+char uart_read(char board);
+void uart_write(char board, char c);
+void uart_writecmd(char board, char c); 
 void uart_puts(const char *s);
 void uart_nwrite(const char *s, unsigned int l);
 

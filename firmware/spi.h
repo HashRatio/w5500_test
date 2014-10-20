@@ -9,5 +9,10 @@ void WIZ_HW_RESET(void);
 void WIZ_CS(uint8 val);
 uint8 SPI1_SendByte(uint8 byte);
 
+void flash_WIZ_CS(uint8 val);
+uint8 SPI1_SendByte(uint8 byte);
+uint8 flash_SPI1_SendByte(uint8 byte);
+
+
 #endif
 

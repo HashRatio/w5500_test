@@ -8,6 +8,8 @@
 static struct lm32_spi * w5500_spi = (struct lm32_spi *)W5500_SPI_BASE;
 static struct lm32_timer *tim = (struct lm32_timer *)TIMER_BASE;
 
+static struct lm32_spi * flash_spi = (struct lm32_spi *)SPI1_BASE;
+
 void WIZ_HW_RESET(void)
 {
 	WIZ_CS(1);
@@ -26,6 +28,14 @@ void WIZ_CS(uint8 val)
 	}
 }
 
+void flash_WIZ_CS(uint8 val)
+{
+        if (val == LOW) {
+                writel(tim->gpio&0xFFFFFFFB,&tim->gpio);
+        }else if (val == HIGH){
+                writel(tim->gpio|0x00000004,&tim->gpio);
+        }
+}
 
 uint8 SPI1_SendByte(uint8 byte)
 {
@@ -38,3 +48,17 @@ uint8 SPI1_SendByte(uint8 byte)
 	while (!(w5500_spi->status & (LM32_SPI_STAT_TMT)));
 	return rByte;
 }
+
+uint8 flash_SPI1_SendByte(uint8 byte)
+{
+        unsigned char rByte=0;
+        writeb(1,&flash_spi->ssmask);
+        while (!(flash_spi->status & (LM32_SPI_STAT_TRDY)));
+        writeb(byte,&flash_spi->tx);
+        while (!(flash_spi->status & (LM32_SPI_STAT_RRDY)));
+        rByte = flash_spi->rx;
+        while (!(flash_spi->status & (LM32_SPI_STAT_TMT)));
+       // debug32("flash");
+        return rByte;
+}
+

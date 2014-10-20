@@ -45,6 +45,7 @@
 #define C_TRS	(6 << 5)	// returns 32 bytes status of the core test + 32 bytes clocks + 1 byte = g_dif + (InFuture/10)-1)[1]  ... total 66 bytes
 #define C_CLK	(7 << 5)	// resets mega88 on the selected board, returns silence
 
+
 #define A_WAL	0x56	// ready to take a new master job :)
 #define A_NO	0xa6	// nothing, means the chips are working/busy
 #define A_YES	0x5A	// there is a nonce in the FIFO

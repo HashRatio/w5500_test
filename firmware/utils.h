@@ -13,5 +13,4 @@ void replacetochar(char * str,char oldchar,char newchar);
 char C2D(uint8 c);
 uint16 swaps(uint16 i);
 uint32 swapl(uint32 l);
-//void shift_32bytes(uint8 * target);
 #endif
