@@ -47,8 +47,9 @@ uint8 sn[4]={255,255,255,0};/*定义Subnet变量*/
 uint8 gw[4]={192,168,2,1};/*定义Gateway变量*/
 uint8 dip[4]={192,168,2,116};
 uint8 DEFAULT_DNS[4] = {192,168,2,1};
-uint8 RIP[4] = {182,92,180,216};
-uint8 DOMAIN[] = "stratum.f2pool.com";
+//uint8 RIP[4] = {182,92,180,216};
+uint8 RIP[4];
+uint8 DOMAIN[] = "us1.ghash.io";
 //uint8 DOMAIN[] = "182.92.180.216";
 
 int8 g_new_stratum = 0;

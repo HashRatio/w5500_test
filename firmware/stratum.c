@@ -357,6 +357,7 @@ int32 parse_stratum(const int8 * json)
 	}
 	
 	idx=find_tag_idx(json,"result",6);
+	idx -= 2;
 	if(recv_pkg_id == authorize_id){
 		;
 	}
