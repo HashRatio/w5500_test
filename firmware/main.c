@@ -56,8 +56,15 @@ uint8 DOMAIN[] = "stratum.f2pool.com";
 //static uint8_t g_act[HRTO_P_COUNT];
  int8 g_new_stratum = 0;
 
+//static int g_asic_freq   = BE200_DEFAULT_FREQ;
+//static int g_cur_mm_idx  = 0;
+//static int g_temp_high   = 60;
+//static int g_temp_normal = 50;
 static int g_working = 0;
 //static struct mm_work g_mm_works[MM_BUF_NUM];
+
+//static uint32_t g_nonce2_offset = 0;
+//static uint32_t g_nonce2_range  = 0xffffffff;
 
 #define BE200_RET_RINGBUFFER_SIZE_RX 64
 #define BE200_RET_RINGBUFFER_MASK_RX (BE200_RET_RINGBUFFER_SIZE_RX-1)
@@ -65,6 +72,8 @@ static int g_working = 0;
 static volatile unsigned int ret_produce = 0;
 static volatile unsigned int ret_consume = 0;
 
+//static struct chip_status miner_status[CHIP_NUMBER];
+//static struct be200_result be200_result_buff[BE200_RET_RINGBUFFER_SIZE_RX];
 static volatile unsigned int be200_ret_produce = 0;
 static volatile unsigned int be200_ret_consume = 0;
 
@@ -223,12 +232,16 @@ static int get_result(int board,uint32 * ptr_ntime,uint32 * ptr_nonce,uint32 * p
                 while(!uart_read_nonblock());
                 last = uart_read(idx);
             //    debug32("\nlast:  %0x\n",last);
-                if(last== A_YES)
-                debug32("\ncmd:  %0x\n",last); 
-                  if(last == A_YES) {                       
+		if(last == A_YES){
 			nonce_check = get_result(idx,&ntime_submit,&nonce_submit,&nonce2_submit); 
-                         //  uart1_write(get_result(idx));
-                            continue;}
+			if(nonce_check == NONCE_VALID){
+				send_submit(mm_work_ptr, nonce2_submit, ntime_submit, bswap_32(nonce_submit));
+				calc_hashrate();
+			}
+			else if(nonce_check == NONCE_DIFF)
+				;//debug32("\nLESS DIFF NONCE\n");
+			continue;
+		}
                          else if(last== A_NO)
                             { continue;}
                             else if(last== A_WAL)
