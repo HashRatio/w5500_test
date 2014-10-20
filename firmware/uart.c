@@ -40,9 +40,10 @@ static void uart_write32(unsigned int data)
 	int i;
 	unsigned char * p = (unsigned char *)&data;
 	for(i=0;i<4;i++){		
-		uart_write(0,p[i]);
+		uart_write(1,p[i]);
 	}
 }
+
 
 void uart_test(void)
 {
@@ -53,11 +54,12 @@ void uart_test(void)
 	uart1_write(sta);*/
 	unsigned int mask;
     __asm__ __volatile__("rcsr %0, IM" : "=r" (mask));
-	uart_write32(mask);	
+	uart_write32(mask);
+	
 }
 
 void uart_isr(void)
-   {    
+   {     
 	while (readb(&uart->lsr) & LM32_UART_LSR_DR) {
            	rx_buf[rx_produce] = readb(&uart->rxtx);
               //  uart1_write(rx_buf[rx_produce]);
@@ -120,7 +122,7 @@ char uart_read(char board)
 
        if(board==4) {
 	while (rx_consume4 == rx_produce4);
-	c = rx_buf[rx_consume4];
+	c = rx_buf4[rx_consume4];
 	rx_consume4 = (rx_consume4 + 1) & UART_RINGBUFFER_MASK_RX;	
         }
 	return c;
@@ -168,12 +170,13 @@ if(board==4){
 void uart_writecmd(char board ,char c)
 {
 	unsigned int oldmask;
+
 	oldmask = irq_getmask();
 	irq_setmask(0);
 
 if(board==1){
 	while (!(readb(&uart->lsr) & (LM32_UART_LSR_THRR | LM32_UART_LSR_TEMT)));
-        writeb(LM32_UART_LCR_8BIT, &uart->lcr);
+	writeb(LM32_UART_LCR_8BIT, &uart->lcr);
 	writeb(c, &uart->rxtx);
 }
 
@@ -204,7 +207,6 @@ void uart_init(void)
 
 	rx_produce = 0;
 	rx_consume = 0;
-        
 
 	irq_ack(IRQ_UART);
 
@@ -266,7 +268,6 @@ void uart3_init(void)
 	rx_produce3 = 0;
 	rx_consume3 = 0;
         
-
 	irq_ack(IRQ_UART3);
 
 	/* enable UART interrupts */
@@ -320,15 +321,15 @@ void uart_puts(const char *s)
 {
 	while (*s) {
 		if (*s == '\n')
-			uart_write(0,'\r');
-		uart_write(0,*s++);
+			uart_write(1,'\r');
+		uart_write(1,*s++);
 	}
 }
 
 void uart_nwrite(const char *s, unsigned int l)
 {
 	while (l--)
-		uart_write(0,*s++);
+		uart_write(1,*s++);
 }
 
 
