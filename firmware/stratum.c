@@ -1,4 +1,4 @@
-#include <stdlib.h>
+nclude <stdlib.h>
 
 #include "minilibc.h"
 #include "defines.h"
@@ -18,17 +18,13 @@ static int32 pkg_id = 0;
 
 static int32 json_begin = 0;
 static int32 json_end = 0;
-//static int32 json_ptr = 0;
 static int32 notify_cnt = 0;
-//static uint8 diff_str[64];
 int32 flag_diff;
 int32 flag_notify;
 
 int32 authorize_id;
 int32 subscribe_id;
 int32 submit_id;
-
-//int8 buffer[2048];
 
 struct pool_task{
 	
@@ -47,7 +43,6 @@ int32 connect_poll(uint8 * addr, uint16 port)
 			case SOCK_INIT:/*socket初始化完成*/
 				//debug32("SOCK_INIT\n");
 				connect(SOCK_STRATUM, addr ,port);/*在TCP模式下向服务器发送连接请求*/
-				delay(500);
 				break;
 			case SOCK_ESTABLISHED:/*socket连接建立*/
 				//debug32("SOCK_ESTABLISHED\n");
@@ -103,9 +98,8 @@ int32 send_submit(struct mm_work *mw, uint32 nonce2, uint32 ntime, uint32 nonce)
     {
         setSn_IR(SOCK_STRATUM, Sn_IR_CON);/*Sn_IR的第0位置1*/
     }
-	send(SOCK_STRATUM,(uint8*)buffer,strlen(buffer),0);
 	submit_id = pkg_id;
-	return 0;
+	return send(SOCK_STRATUM,(uint8*)buffer,strlen(buffer),0);
 }
 
 int32 recv_stratum()
@@ -132,18 +126,12 @@ int32 recv_stratum()
     len=getSn_RX_RSR(SOCK_STRATUM);/*len为已接收数据的大小*/
 	
     if(len>0){
-		//debug32("\n******************recv_stratum***json_end:%d******************\n",json_end);	
         recv(SOCK_STRATUM,(uint8*)buffer+json_end,len);/*W5200接收来自Sever的数据*/
-		//hexdump((const uint8 *)buffer,2048);
-		//debug32(buffer);
 		len+=json_end;
 		json_begin = json_end = 0;
 		while(1){
-			//if(buffer[json_ptr] != '{')
-			//	break;
 			if(buffer[json_end] == '\n'){
 				buffer[json_end] = '\0';
-				//debug32("end: %d\n",json_end);
 				json_len = json_end - json_begin;
 				debug32("ready to parse:%s\n",buffer+json_begin);
 				parse_stratum(buffer+json_begin);
@@ -157,9 +145,6 @@ int32 recv_stratum()
 					json_end = 0;
 				}
 				else{
-					//debug32("buffer:%s\n",buffer);
-					//debug32("json_end:%d end:%c 0x%x\n",json_end,buffer[json_end],buffer[json_end]);
-					//debug32("!!!!!bad end.\n");
 					memcpy(buffer,buffer+json_begin,len-json_begin);
 					json_end = len-json_begin;
 				}
@@ -181,14 +166,20 @@ static void hex2bin(uint8 * bin,uint8 * hex,int32 bin_len){
 	}
 }
 
-/*static void swap_int32(uint8* p){
-	uint8 buff[4];
-	memcpy(buff,p,4);
-	p[0] = buff[3];
-	p[1] = buff[2];
-	p[2] = buff[1];
-	p[3] = buff[0];
-}*/
+static int32 find_tag_idx(const int8* json, const int8* tag, uint8 tag_len)
+{
+	int32 idx = 0;
+	while(42){
+		if(idx >= je)
+			return -1;
+		if(strncmp(json+jt[idx].start,tag,tag_len) == 0){
+			idx++;
+			idx++;
+			return idx;
+		}
+		idx++;
+	}
+}
 
 int32 parse_nofify(const int8 * json)
 {
@@ -200,16 +191,8 @@ int32 parse_nofify(const int8 * json)
 
 	notify_cnt++;
 	
-	while(1){
-		if(idx >= je)
-			break;
-		if(strncmp(json+jt[idx].start,"params",6) == 0){
-			idx++;
-			idx++;
-			break;
-		}
-		idx++;
-	}
+	idx = find_tag_idx(json,"params",6);
+
 	/*job_id*/
 	memset(mm_work_ptr->job_id,0,20);
 	memcpy(mm_work_ptr->job_id,json+jt[idx].start,jt[idx].end-jt[idx].start);
@@ -276,14 +259,17 @@ int32 parse_nofify(const int8 * json)
 	idx++;
 	len = (jt[idx].end - jt[idx].start)/2;
 	hex2bin(mm_work_ptr->header+offset,(uint8*)json+jt[idx].start,len);
-	//swap_int32(mm_work_ptr->header+offset);
+	if(g_hashrate_reset_flag){
+		memcpy((uint8*)&g_last_ntime,mm_work_ptr->header+offset,4);
+		g_hashrate_reset_flag = 0;
+	}
+	memcpy((uint8*)&g_curr_ntime,mm_work_ptr->header+offset,4);
 	offset += len;
 	
 	/*nbits #BIT ENDIAN#*/
 	idx--;
 	len = (jt[idx].end - jt[idx].start)/2;
 	hex2bin(mm_work_ptr->header+offset,(uint8*)json+jt[idx].start,len);
-	//swap_int32(mm_work_ptr->header+offset);
 	offset += len;
 	//idx++;
 	
@@ -294,9 +280,6 @@ int32 parse_nofify(const int8 * json)
 	mm_work_ptr->header[offset+3] = 0x80;
 	mm_work_ptr->header[124] = 0x80;
 	mm_work_ptr->header[125] = 0x02;
-	// mm_work_ptr->header[offset] = 0x80;
-	// mm_work_ptr->header[126] = 0x02;
-	// mm_work_ptr->header[127] = 0x80;
 
 	//hexdump((uint8*)mm_work_ptr->header,128);
 	
@@ -310,24 +293,12 @@ static void shift_32bytes(uint8 * target)
 		target[i] = target[i+1]&0x01?(0x80|(target[i] >> 1)):(target[i] >> 1);
 	}
 }
-/*
-static void add_32bytes(uint8 * op1,uint8 * op2)
-{
-	int32 i;
-	uint8 cf = 0;
-	uint16 mid;
-	for(i=31;i>=0;i--){
-		mid = (uint16)op1[i] + (uint16)op2[i] + (uint16)cf;
-		op1[i] = (uint8)mid;
-		cf = mid>>8;
-	}
-}*/
 
 /* Can only deal with diff = pow(2,n) */
 static void calc_target(uint8 * target,uint32 diff)
 {
 	int32 i=0;
-	int32 loop;
+	int32 loop=0;
 	memcpy(target,g_diff1_target,32);
 	while(diff){
 		if( (diff & 0x00000001) == 0x00000001)
@@ -341,32 +312,17 @@ static void calc_target(uint8 * target,uint32 diff)
 
 int32 parse_diff(const int8 * json)
 {
-	uint32 diff;
-	int32 idx = 0;
-	while(1){
-		if(idx >= je)
-			break;
-		if(strncmp(json+jt[idx].start,"params",6) == 0){
-			idx++;
-			idx++;
-			break;
-		}
-		idx++;
-	}
+	int32 idx = find_tag_idx(json,"params",6);
 	*(char*)(json+jt[idx].end)=0;
-	diff = ATOI((char *)json+jt[idx].start,10);
-	//diff = 256;
-	calc_target(mm_work_ptr->target,diff);
-	hexdump(mm_work_ptr->target,32);
-	debug32("stratum diff:%d\n",diff);
+	g_diff = ATOI((char *)json+jt[idx].start,10);
+	//g_diff = 16;
+	calc_target(mm_work_ptr->target,g_diff);
+	debug32("Set diff to %d\n",g_diff);
 	return 0;
 }
 
 int32 parse_result(const int8 * json)
 {
-	// int idx = 0;
-	// jsmn_init(&jp);
-	// je = jsmn_parse(&jp,json,strlen(json),jt, TOKEN_BUFFER);
 	return 0;
 }
 
@@ -377,16 +333,6 @@ int32 parse_stratum(const int8 * json)
 	int32 recv_pkg_id = 0;
 	jsmn_init(&jp);
 	je = jsmn_parse(&jp,json,strlen(json),jt, TOKEN_BUFFER);
-	
-/*  	while(1){
-		if(idx >= je)
-			break;
-		//memset(buffer,0,BUFFER_SIZE);
-		memcpy(buffer,json+jt[idx].start,jt[idx].end-jt[idx].start);
-		//buffer[jt[idx].end] = '\0';
-		debug32("idx:%d err:%d start:%d end:%d size:%d type:%d\n",idx,je,jt[idx].start,jt[idx].end,jt[idx].size,jt[idx].type);
-		idx++;
-	}  */
 	
 	idx=0;
 	while(1){	
@@ -410,26 +356,18 @@ int32 parse_stratum(const int8 * json)
 		idx++;
 	}
 	
-	idx=0;
-	while(1){
-		if(idx >= je)
-			return -1;
-		if(strncmp(json+jt[idx].start,"result",6) == 0){
-			if(recv_pkg_id == authorize_id){
-				debug32("authorize\n");
-			}
-			else if(recv_pkg_id == subscribe_id){
-				memcpy(nonce1_str,json+jt[idx+9].start,8);
-				nonce1_bin = ATOI32(nonce1_str,16);
-				debug32("subscribe:nonce1:%s %x\n",nonce1_str,nonce1_bin);
-				break;
-			}
-			else if(recv_pkg_id == submit_id){
-				debug32("submit response.\n");
-			}
-			break;
-		}
-		idx++;
+	idx=find_tag_idx(json,"result",6);
+	idx -= 2;
+	if(recv_pkg_id == authorize_id){
+		;
+	}
+	else if(recv_pkg_id == subscribe_id){
+		memcpy(nonce1_str,json+jt[idx+9].start,8);
+		nonce1_bin = ATOI32(nonce1_str,16);
+		;
+	}
+	else if(recv_pkg_id == submit_id){
+		;
 	}
 	return 0;
 }
