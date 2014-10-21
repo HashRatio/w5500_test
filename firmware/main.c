@@ -126,13 +126,13 @@ uint32_t be200_send_work(uint8_t idx,struct work *w)
         for(i=0;i<49;i++)
    { //   uart1_writecmd(i);       
 		
-                while(!uart_read_nonblock());
+                //while(!uart_read_nonblock());
                 last = uart_read(idx);
                 
                 uart_write(idx,w->data[i]);
    }
 //      uart1_write(0xBB);
-             while(!uart_read_nonblock());
+          //   while(!uart_read_nonblock());
                 last = uart_read(idx);
 //                uart1_write(last);
            debug32("\nw->data\n");
@@ -189,7 +189,7 @@ static int get_result(int board,uint32 * ptr_ntime,uint32 * ptr_nonce,uint32 * p
 	int main(int argv,char * * argc)
 	{
 //		struct work work;
-		uint16_t idx=1,last=0;
+		uint16_t idx=0,last=0;
         uint32_t nonce2=0;
 	int32 nonce_check;
 	uint32 nonce_submit,nonce2_submit,ntime_submit;
@@ -229,7 +229,6 @@ static int get_result(int board,uint32 * ptr_ntime,uint32 * ptr_nonce,uint32 * p
 		wdg_feed_sec(60);
               //   debug32("\nstratum1\n");
                 uart_writecmd(idx,C_ASK);
-                while(!uart_read_nonblock());
                 last = uart_read(idx);
             //    debug32("\nlast:  %0x\n",last);
 		if(last == A_YES){
