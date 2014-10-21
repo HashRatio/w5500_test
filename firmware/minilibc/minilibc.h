@@ -12,4 +12,9 @@ int memcmp ( const void * ptr1, const void * ptr2, size_t num );
 size_t strlen(const char *str);
 char *strchr(const char *p, int ch);
 char *strncpy(char *dst, const char *src, size_t n);
+char *strcpy(char *dest, const char *src);
+char * strcat(char *s1, const char *s2);
+char * strstr(const char *s, const char *find);
+char * strtok(char *s, const char *delim);
+int strcmp(const char *s1, const char *s2);
 #endif

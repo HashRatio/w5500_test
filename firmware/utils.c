@@ -136,3 +136,14 @@ uint32 swapl(uint32 l)
   ret |= ((l >> 24) & 0xFF);
   return ret;
 }
+
+//get mid str
+void mid(int8* src, int8* s1, int8* s2, int8* sub)
+{
+  int8* sub1=strstr(src,s1);
+  sub1+=strlen(s1);
+  int8* sub2=strstr(sub1,s2);
+  uint16 n=sub2-sub1;
+  strncpy(sub,sub1,n);
+  sub[n]=0;
+}
