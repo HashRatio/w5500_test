@@ -179,13 +179,12 @@ static int get_result(int board,uint32 * ptr_ntime,uint32 * ptr_nonce,uint32 * p
 
 int main(int argv,char * * argc)
 {
-//		struct work work;
     uint16_t idx=1,last=0;
     uint32_t nonce2=0;
 	int32 nonce_check;
 	uint32 nonce_submit,nonce2_submit,ntime_submit;
-    uint8 txsize[8] = {2,2,4,0,2,2,2,2};/*给每个socket配置一个2KB的发送内存*/
-    uint8 rxsize[8] = {2,2,4,0,2,2,2,2};/*给每个socket配置一个2KB的接收内存*/		
+    uint8 txsize[8] = {2,2,2,2,2,2,2,2};/*给每个socket配置一个2KB的发送内存*/
+    uint8 rxsize[8] = {2,2,2,2,2,2,2,2};/*给每个socket配置一个2KB的接收内存*/		
 	irq_setmask(0);
 	irq_enable(1);		
 	uart_init();
@@ -240,9 +239,14 @@ int main(int argv,char * * argc)
             miner_gen_nonce2_work(mm_work_ptr, nonce2, &g_works[0]);
             nonce2++;
 			be200_send_work(idx,&g_works[0]);
-                        g_new_stratum = 1; 
-                              }     } 
-                 else {uart_writecmd(idx,0x00);delay(100);}
+            g_new_stratum = 1; 
+            }     
+        } 
+        else
+        {
+            uart_writecmd(idx,0x00);
+            delay(100);
+        }
 	} // while(1) 	
 	return 0;
 }

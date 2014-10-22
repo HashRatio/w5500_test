@@ -101,7 +101,7 @@ void find_http_uri_type(
 void parse_http_request(
 	st_http_request * request, 	/**< request to be returned */
 	uint8 * buf				/**< pointer to be parsed */
-	)
+)
 {
   char * nexttok;
   nexttok = strtok((char*)buf," ");
@@ -138,8 +138,6 @@ void parse_http_request(
   }
   //strcpy(request->URI,nexttok);
   request->URI = nexttok;
-                
-	
 }
 
 
