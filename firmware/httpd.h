@@ -68,7 +68,7 @@
 #define DOUT_RES_0  "HTTP/1.1 200 OK\r\nContent-Type: text/plain\r\nContent-Length: 1\r\n\r\n0"
 
 #define MAX_RX_URI_SIZE	1460//(TX_RX_MAX_BUF_SIZE/2 - sizeof(char)*2)
-#define MAX_TX_URI_SIZE	2920//(TX_RX_MAX_BUF_SIZE/2 - sizeof(char)*2)
+#define MAX_TX_URI_SIZE	2048//(TX_RX_MAX_BUF_SIZE/2 - sizeof(char)*2)
 
 /**
  @brief 	Structure of HTTP REQUEST 
