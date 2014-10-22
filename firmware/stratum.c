@@ -11,6 +11,10 @@
 #include "utils.h"
 #include "pub_var.h"
 
+const int8 SUBMIT_TEMPLATE[] = "{\"params\": [\"%s\", \"%s\",\"%08x\", \"%08x\", \"%08x\"], \"id\": %d, \"method\": \"mining.submit\"}\n";
+const int8 AUTH_TEMPLATE[] = "{\"params\": [\"%s\", \"%s\"], \"id\": %d, \"method\": \"mining.authorize\"}\n";
+const int8 SUBSCRIBE_TEMPLATE[] = "{\"id\": %d, \"method\": \"mining.subscribe\", \"params\": [\"hashratio\"]}\n";
+
 static jsmn_parser jp;
 static jsmntok_t jt[TOKEN_BUFFER];
 static jsmnerr_t je;
@@ -63,7 +67,7 @@ int32 send_subscribe()
 {
 	pkg_id++;
 	memset(buffer,0,BUFFER_SIZE);
-	m_sprintf(buffer,"{\"id\": %d, \"method\": \"mining.subscribe\", \"params\": [\"hashratio\"]}\n", pkg_id);
+	m_sprintf(buffer,SUBSCRIBE_TEMPLATE, pkg_id);
 	if(getSn_IR(SOCK_STRATUM) & Sn_IR_CON)
     {
         setSn_IR(SOCK_STRATUM, Sn_IR_CON);/*Sn_IR的第0位置1*/
@@ -77,7 +81,7 @@ int32 send_authorize()
 {
 	pkg_id++;
 	memset(buffer,0,BUFFER_SIZE);
-	m_sprintf(buffer,"{\"params\": [\"%s\", \"%s\"], \"id\": %d, \"method\": \"mining.authorize\"}\n", g_worker_name,g_worker_pwd,pkg_id);
+	m_sprintf(buffer,AUTH_TEMPLATE, g_worker_name,g_worker_pwd,pkg_id);
 	debug32("%s",buffer);
 	if(getSn_IR(SOCK_STRATUM) & Sn_IR_CON)
     {
@@ -92,7 +96,7 @@ int32 send_submit(struct mm_work *mw, uint32 nonce2, uint32 ntime, uint32 nonce)
 {
 	pkg_id++;
 	memset(buffer,0,BUFFER_SIZE);
-	m_sprintf(buffer,"{\"params\": [\"%s\", \"%s\",\"%08x\", \"%08x\", \"%08x\"], \"id\": %d, \"method\": \"mining.submit\"}\n", g_worker_name,mw->job_id,nonce2,ntime,nonce,pkg_id);
+	m_sprintf(buffer,SUBMIT_TEMPLATE, g_worker_name,mw->job_id,nonce2,ntime,nonce,pkg_id);
 	debug32("%s",buffer);
 	if(getSn_IR(SOCK_STRATUM) & Sn_IR_CON)
     {

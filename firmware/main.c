@@ -36,6 +36,9 @@
 #include "stratum.h"
 #include "pub_var.h"
 #include "flash.h"
+#include "httpd.h"
+#include "httputil.h"
+
 
 #define MM_BUF_NUM  3
 #define IDLE_TIME	60	/* Seconds */
@@ -48,23 +51,11 @@ uint8 gw[4]={192,168,2,1};/*定义Gateway变量*/
 uint8 dip[4]={192,168,2,116};
 uint8 DEFAULT_DNS[4] = {192,168,2,1};
 uint8 RIP[4] ;
-uint8 DOMAIN[] = "stratum.f2pool.com";
+uint8 DOMAIN[] = "us1.ghash.io";
 //uint8 DOMAIN[] = "182.92.180.216";
 
-
-//static uint8_t g_pkg[HRTO_P_COUNT];
-//static uint8_t g_act[HRTO_P_COUNT];
- int8 g_new_stratum = 0;
-
-//static int g_asic_freq   = BE200_DEFAULT_FREQ;
-//static int g_cur_mm_idx  = 0;
-//static int g_temp_high   = 60;
-//static int g_temp_normal = 50;
+int8 g_new_stratum = 0;
 static int g_working = 0;
-//static struct mm_work g_mm_works[MM_BUF_NUM];
-
-//static uint32_t g_nonce2_offset = 0;
-//static uint32_t g_nonce2_range  = 0xffffffff;
 
 #define BE200_RET_RINGBUFFER_SIZE_RX 64
 #define BE200_RET_RINGBUFFER_MASK_RX (BE200_RET_RINGBUFFER_SIZE_RX-1)
@@ -72,27 +63,13 @@ static int g_working = 0;
 static volatile unsigned int ret_produce = 0;
 static volatile unsigned int ret_consume = 0;
 
-//static struct chip_status miner_status[CHIP_NUMBER];
-//static struct be200_result be200_result_buff[BE200_RET_RINGBUFFER_SIZE_RX];
 static volatile unsigned int be200_ret_produce = 0;
 static volatile unsigned int be200_ret_consume = 0;
 
+//int buffer_test[1024] __attribute__((section(".bufdata")));
+
 //int8 buffer[BUFFER_SIZE];/*定义一个2KB的缓存*
 
-uint8 merkle_branch[] = {
-0x11,0x11,0x11,0x11,0x11,0x11,0x11,0x11,0x11,0x11,0x11,0x11,0x11,0x11,0x11,0x11,
-0x22,0x22,0x22,0x22,0x22,0x22,0x22,0x22,0x22,0x22,0x22,0x22,0x22,0x22,0x22,0x22,
-0x33,0x33,0x33,0x33,0x33,0x33,0x33,0x33,0x33,0x33,0x33,0x33,0x33,0x33,0x33,0x33,
-0x44,0x44,0x44,0x44,0x44,0x44,0x44,0x44,0x44,0x44,0x44,0x44,0x44,0x44,0x44,0x44,
-0x55,0x55,0x55,0x55,0x55,0x55,0x55,0x55,0x55,0x55,0x55,0x55,0x55,0x55,0x55,0x55,
-0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,
-0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,
-0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,
-0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,
-0x12,0x34,0x56,0x78,0x90,0xAB,0xCD,0xEF,0x12,0x34,0x56,0x78,0x90,0xAB,0xCD,0xEF,
-0x12,0x34,0x56,0x78,0x90,0xAB,0xCD,0xEF,0x12,0x34,0x56,0x78,0x90,0xAB,0xCD,0xEF,
-};
-int a = 0x11223344;
 //uint8 b[0x2000] = {0x55};
 
 void W5500_Init(void)
@@ -186,52 +163,49 @@ static int get_result(int board,uint32 * ptr_ntime,uint32 * ptr_nonce,uint32 * p
 }
 
 
-	int main(int argv,char * * argc)
-	{
-//		struct work work;
-		uint16_t idx=1,last=0;
-        uint32_t nonce2=0;
+int main(int argv,char * * argc)
+{
+    uint16_t idx=1,last=0;
+    uint32_t nonce2=0;
 	int32 nonce_check;
 	uint32 nonce_submit,nonce2_submit,ntime_submit;
-        uint8 txsize[8] = {2,2,2,2,2,2,2,2};/*给每个socket配置一个2KB的发送内存*/
-        uint8 rxsize[8] = {2,2,2,2,2,2,2,2};/*给每个socket配置一个2KB的接收内存*/		
+    uint8 txsize[8] = {2,2,2,2,2,2,2,2};/*给每个socket配置一个2KB的发送内存*/
+    uint8 rxsize[8] = {2,2,2,2,2,2,2,2};/*给每个socket配置一个2KB的接收内存*/		
 	irq_setmask(0);
 	irq_enable(1);		
 	uart_init();
 	uart1_init();   	
 
-        W5500_Init();
+    W5500_Init();
 	debug32("Init done.\n");
-        setRTR(2000);//设置溢出时间值
-        setRCR(3);//设置最大重新发送次数
-        sysinit(txsize, rxsize);//初始化8个socket
-        mm_work_ptr = &g_mm_works[0];
+    setRTR(2000);//设置溢出时间值
+    setRCR(3);//设置最大重新发送次数
+    sysinit(txsize, rxsize);//初始化8个socket
+    mm_work_ptr = &g_mm_works[0];
 	memcpy(mm_work_ptr->target,g_diff256_target,32);
-        if(do_dns(DEFAULT_DNS,DOMAIN,RIP))
-                debug32("parse ok.\n");
-        else
-                debug32("parse failed.\n");
-		connect_poll(RIP,3333);
-        send_subscribe();
-        send_authorize();
-		g_working = 1; 
+      
+    if(do_dns(DEFAULT_DNS,DOMAIN,RIP))
+        debug32("parse ok.\n");
+    else
+        debug32("parse failed.\n");
+    connect_poll(RIP,3333);
+    send_subscribe();
+    debug32("send subscribe.\n");
+    send_authorize();
+    debug32("send authorize.\n");
+    g_working = 1; 
  
 	uart_writecmd(idx,C_LPO);
 	uart_writecmd(idx,C_DIF|0x00);
-               debug32("\n55 66 77\n");   	
-//       for(i=0;i<6;i++)
-//       be200_send_work(idx,&g_works[0]);
 
 	while (1) {// if(flag[idx]==0)
-                recv_stratum(&g_mm_works[0]);
-             //   debug32("\nstratum\n");
-                 {               
+        do_http();
+        recv_stratum(&g_mm_works[0]);     
+        continue;
 		wdg_feed_sec(60);
-              //   debug32("\nstratum1\n");
-                uart_writecmd(idx,C_ASK);
-                while(!uart_read_nonblock());
-                last = uart_read(idx);
-            //    debug32("\nlast:  %0x\n",last);
+        uart_writecmd(idx,C_ASK);
+        while(!uart_read_nonblock());
+        last = uart_read(idx);
 		if(last == A_YES){
 			nonce_check = get_result(idx,&ntime_submit,&nonce_submit,&nonce2_submit); 
 			if(nonce_check == NONCE_VALID){
@@ -242,31 +216,23 @@ static int get_result(int board,uint32 * ptr_ntime,uint32 * ptr_nonce,uint32 * p
 				;//debug32("\nLESS DIFF NONCE\n");
 			continue;
 		}
-                         else if(last== A_NO)
-                            { continue;}
-                            else if(last== A_WAL)
-                             { 
-                          //      recv_stratum(&g_mm_works[0]);
-                          //              debug32("\nstratum2\n");
-                              if(g_new_stratum){
-                              //   debug32("\nstratum3\n");
-                                miner_gen_nonce2_work(mm_work_ptr, nonce2, &g_works[0]);
-                                nonce2++;
-                                debug32("\nstratum4\n"); 
-                             //   uart1_write(nonce2&0xff);
-	 /*		mw = &g_mm_works[g_cur_mm_idx];
-			mw->nonce2++;
-			miner_gen_nonce2_work(mw, mw->nonce2, &work);
-			work.mm_idx = g_cur_mm_idx;*/
-                      //  wdg_feed_sec(60);
+        else if(last== A_NO){ 
+            continue;
+        }
+        else if(last== A_WAL)
+        {
+          if(g_new_stratum){
+            miner_gen_nonce2_work(mm_work_ptr, nonce2, &g_works[0]);
+            nonce2++;
 			be200_send_work(idx,&g_works[0]);
-                        g_new_stratum = 1; 
-                              }     } 
-                 else {uart_writecmd(idx,0x00);delay(100);}
-                }  //end if  
-                   //     idx++;
-                   //     if(idx==4) idx=0;	
-		//be200_read_result();
+            g_new_stratum = 1; 
+            }     
+        } 
+        else
+        {
+            uart_writecmd(idx,0x00);
+            delay(100);
+        }
 	} // while(1) 	
 	return 0;
 }
