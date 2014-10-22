@@ -46,8 +46,8 @@ ADDRESS_SPACE dram RAMB16 [0x00008000:0x0000BFFF]
         dram/gen_bram[3].bram RAMB16 [19:16] [0:4095] PLACED = X0Y8;
         dram/gen_bram[4].bram RAMB16 [15:12] [0:4095] PLACED = X0Y2;
         dram/gen_bram[5].bram RAMB16 [11:8] [0:4095] PLACED = X0Y4;
-        dram/gen_bram[6].bram RAMB16 [7:4] [0:4095] PLACED = X1Y10;
-        dram/gen_bram[7].bram RAMB16 [3:0] [0:4095] PLACED = X1Y12;
+        dram/gen_bram[6].bram RAMB16 [7:4] [0:4095] PLACED = X1Y12;
+        dram/gen_bram[7].bram RAMB16 [3:0] [0:4095] PLACED = X1Y10;
     END_BUS_BLOCK;
 END_ADDRESS_SPACE;
 

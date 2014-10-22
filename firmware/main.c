@@ -103,13 +103,13 @@ uint32_t be200_send_work(uint8_t idx,struct work *w)
         for(i=0;i<49;i++)
    { //   uart1_writecmd(i);       
 		
-                while(!uart_read_nonblock());
+                //while(!uart_read_nonblock());
                 last = uart_read(idx);
                 
                 uart_write(idx,w->data[i]);
    }
 //      uart1_write(0xBB);
-             while(!uart_read_nonblock());
+          //   while(!uart_read_nonblock());
                 last = uart_read(idx);
 //                uart1_write(last);
            debug32("\nw->data\n");
@@ -161,7 +161,6 @@ static int get_result(int board,uint32 * ptr_ntime,uint32 * ptr_nonce,uint32 * p
 	}
 	return nonce_check;
 }
-
 
 int main(int argv,char * * argc)
 {
