@@ -13,6 +13,7 @@
 
 #define SOCK_DNS		1	// UDP
 #define SOCK_STRATUM	0
+#define SOCK_HTTP       2
 
 #define CH_SIZE		                0x2000
 #define COMMON_BASE 				0x0000

@@ -45,8 +45,6 @@ SECTIONS
     _etext = .;
   } > Instruction_IM =0 
 
-
-
   /* read-only data */
   .rodata : 
   { 
@@ -57,11 +55,9 @@ SECTIONS
      *(.rodata1)
      _erodata = .;
   } > Data_IM
-
-
-
+  
   /* read/write data */
-  .data : 
+  .data :
   {
      . = ALIGN(4);
      _fdata = .;

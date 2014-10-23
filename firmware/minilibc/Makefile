@@ -12,14 +12,14 @@
 
 all: libminilibc.a
 
-libminilibc.a: memcpy.o memset.o printf.o strncmp.o memcmp.o strlen.o strchr.o strncpy.o
+libminilibc.a: memset.o strcat.o strcpy.o strncpy.o memcmp.o strchr.o strlen.o strstr.o memcpy.o printf.o strcmp.o strncmp.o strtok.o
 	$(AR) rc $@ $^
 
 %.o: %.c minilibc.h
 	$(CC) $(CFLAGS) $(CPPFLAGS) -c $< -o $@
 
 clean:
-	rm -f memcpy.o memset.o printf.o strncmp.o memcmp.o strlen.o strchr.o strncpy.o
+	rm -f memset.o strcat.o strcpy.o strncpy.o memcmp.o strchr.o strlen.o strstr.o memcpy.o printf.o strcmp.o strncmp.o strtok.o
 	rm -f libminilibc.a
 
 

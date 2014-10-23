@@ -182,7 +182,8 @@ uint16 send(SOCKET s, const uint8 * buf, uint16 len, int8 retry)
 
 #ifdef __DEF_IINCHIP_DBG__
 	debug32("send()\r\n");
-#endif        
+#endif  
+    //debug32("max buff:%d\n",getIINCHIP_TxMAX(s));
         if(retry) ;
         else {     
            if (len > getIINCHIP_TxMAX(s)) ret = getIINCHIP_TxMAX(s); // check size not to exceed MAX size.
