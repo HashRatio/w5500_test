@@ -23,6 +23,12 @@ void isr(void)
 
 	if (irqs & IRQ_UART)
 		uart_isr();
+
+        if (irqs & IRQ_UART2)
+                uart2_isr();
+	
+        if (irqs & IRQ_UART3)
+                uart3_isr();
 	
 	if (irqs & IRQ_UARTDEBUG)
 		uart1_isr();

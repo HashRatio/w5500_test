@@ -9,18 +9,18 @@ NET "uart1SIN"  LOC = E7;
 NET "uart1SOUT" LOC = C7;
 NET "uart1SOUT" PULLUP;
 
-NET "uart2SIN"  LOC = A9;
-NET "uart2SOUT" LOC = D8;
-NET "uart2SOUT" PULLUP;
-
-NET "uart3SIN"  LOC = L1;
-NET "uart3SOUT" LOC = M1;
-NET "uart3SOUT" PULLUP;
-
-
-NET "uart4SIN"  LOC = K2;
-NET "uart4SOUT" LOC = K1;
-NET "uart4SOUT" PULLUP;
+#NET "uart2SIN"  LOC = A9;
+#NET "uart2SOUT" LOC = D8;
+#NET "uart2SOUT" PULLUP;
+#
+#NET "uart3SIN"  LOC = L1;
+#NET "uart3SOUT" LOC = M1;
+#NET "uart3SOUT" PULLUP;
+#
+#
+#NET "uart4SIN"  LOC = K2;
+#NET "uart4SOUT" LOC = K1;
+#NET "uart4SOUT" PULLUP;
 
 # UART debug
 NET "uart_debugSIN" LOC = T15;

@@ -112,8 +112,6 @@ uint32_t be200_send_work(uint8_t idx,struct work *w)
 
         uint8_t i;
         uint8_t last=0;
-       
-
 //	be200_cmd_rd(idx, BE200_REG_CLEAR);  // clear nonce_mask register
 	       w->data[44]=0xff&(w->nonce2>>24);
 	       w->data[45]=0xff&(w->nonce2>>16);
@@ -185,11 +183,10 @@ static int get_result(int board,uint32 * ptr_ntime,uint32 * ptr_nonce,uint32 * p
 	return nonce_check;
 }
 
-
 	int main(int argv,char * * argc)
 	{
 //		struct work work;
-		uint16_t idx=0,last=0;
+		uint16_t idx=1,last=0;
         uint32_t nonce2=0;
 	int32 nonce_check;
 	uint32 nonce_submit,nonce2_submit,ntime_submit;
@@ -198,8 +195,10 @@ static int get_result(int board,uint32 * ptr_ntime,uint32 * ptr_nonce,uint32 * p
 	irq_setmask(0);
 	irq_enable(1);		
 	uart_init();
-	uart1_init();   	
-
+//        uart2_init();
+//        uart3_init();
+	uart1_init();   
+	debug32("Init done.\n");
         W5500_Init();
 	debug32("Init done.\n");
         setRTR(2000);//设置溢出时间值

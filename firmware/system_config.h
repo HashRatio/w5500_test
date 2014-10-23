@@ -31,8 +31,8 @@
 #define IRQ_UART2		(0x00000020) /* 5 */
 #define IRQ_UART3		(0x00000040) /* 6 */
 #define IRQ_UART4		(0x00000080) /* 7 */
-#define IRQ_TIMER0		(0x00000020) /* 5 */
-#define IRQ_TIMER1		(0x00000040) /* 6 */
+#define IRQ_TIMER0		(0x00000100) /* 5 */
+#define IRQ_TIMER1		(0x00000200) /* 6 */
 
 /* Registers */
 #define W5500_SPI_BASE	(0x80000000)
