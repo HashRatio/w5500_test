@@ -1,6 +1,6 @@
 /*
  * Author: Xiangfu Liu <xiangfu@openmobilefree.net>
- * Bitcoin:	1CanaaniJzgps8EV6Sfmpb7T8RutpaeyFn
+ * Bitcoin: 1CanaaniJzgps8EV6Sfmpb7T8RutpaeyFn
  *
  * This is free and unencumbered software released into the public domain.
  * For details see the UNLICENSE file at the root of the source tree.
@@ -21,7 +21,7 @@ void uart4_isr(void);
 int uart_read_nonblock(void);
 char uart_read(char board);
 void uart_write(char board, char c);
-void uart_writecmd(char board, char c); 
+void uart_writecmd(char board, char c);
 void uart_puts(const char *s);
 void uart_nwrite(const char *s, unsigned int l);
 
@@ -39,4 +39,4 @@ char uart1_read(void);
 
 #endif
 
-#endif	/* _UART_H */
+#endif  /* _UART_H */

@@ -1,6 +1,6 @@
 /*
  * Author: Xiangfu Liu <xiangfu@openmobilefree.net>
- * Bitcoin:	1CanaaniJzgps8EV6Sfmpb7T8RutpaeyFn
+ * Bitcoin: 1CanaaniJzgps8EV6Sfmpb7T8RutpaeyFn
  *
  * This is free and unencumbered software released into the public domain.
  * For details see the UNLICENSE file at the root of the source tree.
@@ -21,10 +21,10 @@ uint32_t timer_read(unsigned char timer);
 void led(uint8_t value);
 void led_on(uint8_t mask);
 void led_off(uint8_t mask);
-void led_blink(uint8_t mask,uint32_t interval);
+void led_blink(uint8_t mask, uint32_t interval);
 
 void chip_hard_reset(uint32_t interval);
 int read_module_id();
 int read_power_good();
 
-#endif	/* __TIMER_H__ */
+#endif  /* __TIMER_H__ */

@@ -1,6 +1,6 @@
 /*
  * Author: Xiangfu Liu <xiangfu@openmobilefree.net>
- * Bitcoin:	1CanaaniJzgps8EV6Sfmpb7T8RutpaeyFn
+ * Bitcoin: 1CanaaniJzgps8EV6Sfmpb7T8RutpaeyFn
  *
  * This is free and unencumbered software released into the public domain.
  * For details see the UNLICENSE file at the root of the source tree.
@@ -10,9 +10,9 @@
 #define _PROTOCOL_H_
 
 /* Avalon2 protocol package type */
-#define MM_VERSION_LEN	15
-#define HRTO_H1	'H'
-#define HRTO_H2	'R'
+#define MM_VERSION_LEN  15
+#define HRTO_H1 'H'
+#define HRTO_H2 'R'
 
 #define HRTO_DEFAULT_MODULARS          5
 #define HRTO_DEFAULT_MINERS_PER_MODULAR 16
@@ -41,7 +41,7 @@
 #define HRTO_P_GET_FREQ 22
 
 #define HRTO_P_ACK        51
-#define HRTO_P_NAK		  52
+#define HRTO_P_NAK        52
 #define HRTO_P_NONCE      53
 #define HRTO_P_STATUS     54
 #define HRTO_P_ACKDETECT  55
@@ -58,4 +58,4 @@
 
 
 
-#endif	/* _PROTOCOL_H_ */
+#endif  /* _PROTOCOL_H_ */
