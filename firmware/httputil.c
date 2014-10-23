@@ -52,10 +52,10 @@ const int8 PAGE_MINING[] SECTION_TEXT = "\
 <tr><td align=center colspan=2><br><input name=update value=Update type=submit><br><br>\
 </form></table></html>";
 
-const int8 URL_TESTSTATUS[] SECTION_TEXT;
-const int8 URL_STATISTICS[] SECTION_TEXT;
-const int8 URL_NETWORK[] SECTION_TEXT;
-const int8 URL_MINING[] SECTION_TEXT;
+const int8 URL_TESTSTATUS[] SECTION_TEXT = "/TestStatus/";
+const int8 URL_STATISTICS[] SECTION_TEXT = "/Statistics/";
+const int8 URL_NETWORK[] SECTION_TEXT = "/Network/";
+const int8 URL_MINING[] SECTION_TEXT = "/Mining/";
 
 
 uint8 boundary[64];
@@ -154,23 +154,23 @@ void proc_http(SOCKET s, uint8 * buf)
     case METHOD_HEAD:
     case METHOD_GET:
         name = http_request.URI;
-        if(strcmp(name,"/index.htm")==0 || strcmp(name,"/")==0 || (strcmp(name,"/index.html")==0) || (strcmp(name,"/Statistics/")==0))
+        if(strcmp(name,"/index.htm")==0 || strcmp(name,"/")==0 || (strcmp(name,"/index.html")==0) || (strcmp(name,URL_STATISTICS)==0))
         {
             memset(tx_buf,0,MAX_TX_URI_SIZE);
             make_response(PAGE_STATISTICS);
             debug32("%d\n",strlen(tx_buf));
             send(s, (uint8 *)tx_buf, strlen((char const*)tx_buf),0);
-        }else if(strcmp(name,"/Network/")==0){
+        }else if(strcmp(name,URL_NETWORK)==0){
             memset(tx_buf,0,MAX_TX_URI_SIZE);
             make_response(PAGE_NETWORK);
             debug32("%d\n",strlen(tx_buf));
             send(s, (uint8 *)tx_buf, strlen((char const*)tx_buf),0);
-        }else if(strcmp(name,"/TestStatus/")==0){
+        }else if(strcmp(name,URL_TESTSTATUS)==0){
             memset(tx_buf,0,MAX_TX_URI_SIZE);
             make_response(PAGE_TESTSTATUS);
             debug32("%d\n",strlen(tx_buf));
             send(s, (uint8 *)tx_buf, strlen((char const*)tx_buf),0);
-        }else if(strcmp(name,"/Mining/")==0){
+        }else if(strcmp(name,URL_MINING)==0){
             memset(tx_buf,0,MAX_TX_URI_SIZE);
             make_response(PAGE_MINING);
             debug32("%d\n",strlen(tx_buf));
