@@ -173,6 +173,10 @@ int main(int argv,char * * argc)
 	uart_init();
 	uart1_init();   
 
+    uart_writecmd(idx,C_ASK);
+    last = uart_read(idx);     
+    debug32("uarttest.last= %0x\n",last);
+
     W5500_Init();
 	debug32("Init done.\n");
     setRTR(2000);//设置溢出时间值
@@ -196,7 +200,7 @@ int main(int argv,char * * argc)
 	uart_writecmd(idx,C_DIF|0x00);
 
 	while (1) {// if(flag[idx]==0)
-        do_http();
+//        do_http();
         recv_stratum(&g_mm_works[0]);     
         continue;
 		wdg_feed_sec(60);
