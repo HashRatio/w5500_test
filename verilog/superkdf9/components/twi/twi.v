@@ -291,7 +291,7 @@ reg [7:0] reg_gin  ;
 wire [31:0] reg_gpio = {reg_gin,reg_gout} ;
 always @ ( posedge CLK_I or posedge RST_I ) begin
 	if( RST_I )
-		reg_gout <= 'b0 ;
+		reg_gout <= 24'h000020 ;
 	else if( gpio_wr_en )
 		reg_gout <= TWI_DAT_I[23:0] ;
 end

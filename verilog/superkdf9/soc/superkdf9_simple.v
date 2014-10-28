@@ -104,7 +104,8 @@ module mm (
 , flash_spi_SCLK_MASTER
 , flash_spi_RESET
 , flash_INT
-
+, reset
+, program
 //, LED
 );
 
@@ -222,6 +223,8 @@ inout  uart1SOUT;
 //inout  uart4SOUT;
 
 output  INT;
+input reset;
+output program;
 
 wire [7:0] uart_debugUART_DAT_O;
 wire   uart_debugUART_ACK_O;
@@ -593,7 +596,7 @@ uart_core
 .UART_WB_DAT_WIDTH(8),
 .UART_WB_ADR_WIDTH(4),
 .CLK_IN_MHZ(`MM_CLK_IN_MHZ),
-.BAUD_RATE(115200),
+.BAUD_RATE(460800),
 .STDOUT_SIM(0),
 .STDOUT_SIMFAST(0),
 .LCR_DATA_BITS(8),
@@ -1002,6 +1005,10 @@ assign w5500_spi_RESET = gpioGPIO_OUT_w[0];
 assign w5500_spi_SS_N_MASTER = gpioGPIO_OUT_w[1];
 assign flash_spi_SS_N_MASTER = gpioGPIO_OUT_w[2];
 
+assign program = gpioGPIO_OUT_w[5];
+assign gpioGPIO_IN_w[3] = reset;
+//assign gpioGPIO_IN_w[4] = reset;
+
 twi u_twi(
 // system clock and reset
 /*input         */ .CLK_I       (clk_i                       ) ,
@@ -1047,8 +1054,8 @@ assign superkdf9interrupt_n[1] = 1 ;
 assign superkdf9interrupt_n[0] = 1 ;
 assign superkdf9interrupt_n[4] = !uart_debugINTR ;
 assign superkdf9interrupt_n[2] = 1;
-assign superkdf9interrupt_n[5] = !uart2INTR;
-//assign superkdf9interrupt_n[6] = !uart3INTR;
+assign superkdf9interrupt_n[5] = !TIME0_INT;
+assign superkdf9interrupt_n[6] = !TIME1_INT;
 //assign superkdf9interrupt_n[7] = !uart4INTR;
 assign superkdf9interrupt_n[8] = 1;
 assign superkdf9interrupt_n[9] = 1;

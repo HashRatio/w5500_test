@@ -78,7 +78,6 @@ void timer_int_clean(unsigned char timer)
 void timer0_isr(void)
 {
     /* DO SOMETHING */
-
     timer_int_clean(0);
     irq_ack(IRQ_TIMER0);
 }
@@ -86,41 +85,8 @@ void timer0_isr(void)
 void timer1_isr(void)
 {
     /* DO SOMETHING */
-
     timer_int_clean(1);
     irq_ack(IRQ_TIMER0);
 }
 
-void led(uint8_t value)
-{
-    writel(value, &tim->gpio);
-}
 
-void led_on(uint8_t mask)
-{
-    writel(tim->gpio | mask, &tim->gpio);
-}
-
-void led_off(uint8_t mask)
-{
-    writel(tim->gpio & (~mask), &tim->gpio);
-}
-
-void led_blink(uint8_t mask, uint32_t interval)
-{
-    writel(tim->gpio ^ mask, &tim->gpio);
-    delay(interval);
-    writel(tim->gpio ^ mask, &tim->gpio);
-}
-
-void chip_hard_reset(uint32_t interval)
-{
-    writel(tim->gpio | 0x00000100, &tim->gpio);
-    delay(interval);
-    writel(tim->gpio & 0xFFFFFEFF, &tim->gpio);
-}
-
-int read_power_good()
-{
-    return (readl(&tim->gpio) >> 6) & 0x1f;
-}

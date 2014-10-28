@@ -27,8 +27,8 @@ void config_recover(void);
 void config_write(struct config *configread);
 struct config configbak_read();
 void configbak_write(struct config *configread);
-
-
+void config_reset(void);
+void flash_init(void);
 
 
 

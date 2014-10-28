@@ -244,9 +244,9 @@ void uart_init(void)
     writeb(LM32_UART_MCR_DTR | LM32_UART_MCR_RTS, &uart->mcr);
 
     /* Set baud rate */
-    value = (CPU_FREQUENCY / UART_BAUD_RATE) & 0xff;
+    value = (CPU_FREQUENCY / UART_BAUD_RATE1) & 0xff;
     writeb(value, &uart->divl);
-    value = (CPU_FREQUENCY / UART_BAUD_RATE) >> 8;
+    value = (CPU_FREQUENCY / UART_BAUD_RATE1) >> 8;
     writeb(value, &uart->divh);
 
 }

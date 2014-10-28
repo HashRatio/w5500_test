@@ -4,8 +4,13 @@
 #include "flash.h"
 #include "stratum.h"
 #include "uart.h"
+#include "timer.h"
+#include "system_config.h"
+#include "io.h"
+#include "utils.h"
 
-void flash_IINCHIP_CSoff(void)
+static struct lm32_timer *tim = (struct lm32_timer *)TIMER_BASE;
+void flash_IINCHIP_CSoff()
 {
     flash_WIZ_CS(LOW);
 }
@@ -23,9 +28,34 @@ uint8  flash_IINCHIP_SpiSendData(uint8 dat)
     return(rbyte);
 }
 
+void  config_reset(void)
+{
+    debug32("readl(&tim->gpio)_1=%0x\n",readl(&tim->gpio));
+    if((readl(&tim->gpio)&0x08000000)==0) 
+    {  timer_set(0,3); 
+    debug32("readl(&tim->gpio)_2=%0x\n",readl(&tim->gpio));
+       while(1)
+       { 
+          if((readl(&tim->gpio)&0x08000000)==0x08000000) break;
+       } 
+    debug32("readl(&tim->gpio)_3=%0x\n",readl(&tim->gpio)); 
+    if(timer_read(0)==0)
+       { 
+         config_recover(); 
+       }    
+    else
+       {       
+        debug32("reset\n"); 
+        writel(tim->gpio&0xFFFFFFDF, &tim->gpio); 
+        delay(1); 
+        writel(tim->gpio|0x00000020, &tim->gpio); 
+       }
+    }
+    return;
+}
+
 /*
 @brief  This function writes the data into W5200 registers.
-
 
 uint8 flash_INCHIP_WRITE(uint16 addr,uint8 data)
 {
@@ -154,9 +184,7 @@ uint16 fwiz_write_buf(uint32 addr, uint8* buf, uint16 len)
 uint16 flash_wiz_read_buf(uint32 addr, uint8* buf, uint16 len)
 {
     uint16 idx = 0;
-
     //   IINCHIP_ISR_DISABLE();
-
     //SPI MODE I/F
     flash_IINCHIP_CSoff();                                        // CS=0, SPI start
     flash_IINCHIP_SpiSendData(READ_INSTRUCTION);
@@ -231,6 +259,14 @@ void SPI_Flash_Wait_Busy(void)
 {
     while ((SPI_Flash_ReadSR() & 0x01) == 0x01);
     debug32("NO BUSY\n");   // 等待BUSY位清空
+}
+
+void flash_init(void)
+{
+    uint8 buf[sizeof(struct config)]= {192,168,0,1,55,55,55,55,55,55,55,55,55,55,55,55};
+    struct config *configread;
+    configread = (struct config *)buf; 
+    configbak_write(configread);
 }
 
 void SPI_Flash_Erase_Sector(uint32 Dst_Addr)

@@ -96,22 +96,24 @@ uint32_t be200_send_work(uint8_t idx, struct work *w)
     w->data[47] = 0xff & (w->nonce2);
     w->data[48] = w->mm_idx;
     uart_writecmd(idx, C_JOB);
-
+    delay(10);
 //  uart1_write(0xBB);
     for (i = 0; i < 49; i++)
     {
         //   uart1_writecmd(i);
 
         //while(!uart_read_nonblock());
-        last = uart_read(idx);
+   //     last = uart_read(idx);
 
+  //      debug32("\nw->data last = %0x\n",last);
+    
         uart_write(idx, w->data[i]);
     }
 //      uart1_write(0xBB);
     //   while(!uart_read_nonblock());
     last = uart_read(idx);
 //                uart1_write(last);
-    debug32("\nw->data\n");
+    debug32("\nw->data last = %0x\n",last);
     hexdump(w->data, 49);
 
 //      c = be200_cmd_rd(idx, i);
@@ -175,10 +177,16 @@ int main(int argv, char * * argc)
     irq_enable(1);
     uart_init();
     uart1_init();
-
+    flash_init();
+    debug32("Init done.\n");
+    while (1)  // if(flag[idx]==0)
+    { 
+        config_reset();
+    }
     uart_writecmd(idx, C_ASK);
     last = uart_read(idx);
     debug32("uarttest.last= %0x\n", last);
+    be200_send_work(idx,&g_works[0]);
 
     W5500_Init();
     debug32("Init done.\n");
@@ -203,13 +211,15 @@ int main(int argv, char * * argc)
     uart_writecmd(idx, C_DIF | 0x00);
 
     while (1)  // if(flag[idx]==0)
-    {
+    { 
+        config_reset();
 //        do_http();
+     continue;
         recv_stratum(&g_mm_works[0]);
-        continue;
+       
+    debug32("send authorize.\n");
         wdg_feed_sec(60);
         uart_writecmd(idx, C_ASK);
-        while (!uart_read_nonblock());
         last = uart_read(idx);
         if (last == A_YES)
         {
