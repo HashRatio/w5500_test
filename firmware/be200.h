@@ -45,12 +45,18 @@
 #define C_TRS   (6 << 5)    // returns 32 bytes status of the core test + 32 bytes clocks + 1 byte = g_dif + (InFuture/10)-1)[1]  ... total 66 bytes
 #define C_CLK   (7 << 5)    // resets mega88 on the selected board, returns silence
 
-
 #define A_WAL   0x56    // ready to take a new master job :)
 #define A_NO    0xa6    // nothing, means the chips are working/busy
 #define A_YES   0x5A    // there is a nonce in the FIFO
 #define A_STR   0x6c    // send a string or data followed by termi
 
+#define R_RES 0
+#define R_LPO 0
+#define R_GCK 0
+#define R_DIFF 0
+#define R_JOB 0
+#define R_ASK 1
+#define R_CLK 0
 
 struct chip_status
 {
@@ -67,22 +73,22 @@ struct be200_result
 };
 
 
-void be200_reset(uint8_t idx);
-uint8_t be200_is_idle(uint8_t idx);
-uint8_t be200_input_task(uint8_t idx, const uint8_t * task);
-void be200_start(uint8_t idx);
-uint8_t be200_get_done(uint8_t idx, uint8_t * nonce_mask);
-uint8_t be200_get_result(uint8_t idx, uint8_t nonce_mask, uint32_t * result);
-uint8_t be200_output_result();
-void be200_dump_register(uint8_t idx);
-uint8_t be200_cmd_ck(uint8_t idx);
-uint8_t be200_cmd_rd(uint8_t idx, uint8_t reg);
-void be200_cmd_wr(uint8_t idx, uint8_t reg, uint8_t value);
-void be200_cmd_rst(uint8_t idx);
-void be200_set_pll(uint8_t idx, uint8_t factor);
-void be200_clear(uint8_t idx);
-uint32_t be200_send_work(uint8_t idx, struct work *w);
-void test_miner_status();
-
+// void be200_reset(uint8_t idx);
+// uint8_t be200_is_idle(uint8_t idx);
+// uint8_t be200_input_task(uint8_t idx, const uint8_t * task);
+// void be200_start(uint8_t idx);
+// uint8_t be200_get_done(uint8_t idx, uint8_t * nonce_mask);
+// uint8_t be200_get_result(uint8_t idx, uint8_t nonce_mask, uint32_t * result);
+// uint8_t be200_output_result();
+// void be200_dump_register(uint8_t idx);
+// uint8_t be200_cmd_ck(uint8_t idx);
+// uint8_t be200_cmd_rd(uint8_t idx, uint8_t reg);
+// void be200_cmd_wr(uint8_t idx, uint8_t reg, uint8_t value);
+// void be200_cmd_rst(uint8_t idx);
+// void be200_set_pll(uint8_t idx, uint8_t factor);
+// void be200_clear(uint8_t idx);
+// uint32_t be200_send_work(uint8_t idx, struct work *w);
+// void test_miner_status();
+void tube_handler(uint8 bid);
 
 #endif

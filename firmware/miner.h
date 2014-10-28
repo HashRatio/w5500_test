@@ -32,7 +32,7 @@ typedef struct mm_work
 {
     uint8 job_id[20];
 
-    size_t coinbase_len;
+    uint32 coinbase_len;
     uint8 coinbase[HRTO_P_COINBASE_SIZE];
 
     uint32 nonce2;

@@ -7,7 +7,6 @@
  */
 
 #include <stdbool.h>
-//#include <stdint.h>
 #include<stdio.h>
 #include "types.h"
 #include "minilibc.h"
@@ -168,6 +167,6 @@ int32 calc_hashrate()
     g_share += (4295 * g_diff) / 1000;
     if (g_curr_ntime != g_last_ntime)
         g_hashrate = g_share / (g_curr_ntime - g_last_ntime);
-    debug32("Hashrate:%d\n", g_hashrate);
+    debug32("Hashrate:%d Difficulty:%d\n", g_hashrate,g_diff);
     return 0;
 }

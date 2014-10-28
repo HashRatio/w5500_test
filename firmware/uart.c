@@ -13,27 +13,27 @@
 #include "defines.h"
 #include "intr.h"
 #include "io.h"
-
-#define UART_RINGBUFFER_SIZE_RX 64
+#include "utils.h"
+#define UART_RINGBUFFER_SIZE_RX 128
 #define UART_RINGBUFFER_MASK_RX (UART_RINGBUFFER_SIZE_RX-1)
 
 static char rx_buf[UART_RINGBUFFER_SIZE_RX];
-static char rx_buf2[UART_RINGBUFFER_SIZE_RX];
-static char rx_buf3[UART_RINGBUFFER_SIZE_RX];
-static char rx_buf4[UART_RINGBUFFER_SIZE_RX];
+// static char rx_buf2[UART_RINGBUFFER_SIZE_RX];
+// static char rx_buf3[UART_RINGBUFFER_SIZE_RX];
+// static char rx_buf4[UART_RINGBUFFER_SIZE_RX];
 static volatile unsigned int rx_produce;
 static volatile unsigned int rx_consume;
-static volatile unsigned int rx_produce2;
-static volatile unsigned int rx_consume2;
-static volatile unsigned int rx_produce3;
-static volatile unsigned int rx_consume3;
-static volatile unsigned int rx_produce4;
-static volatile unsigned int rx_consume4;
+// static volatile unsigned int rx_produce2;
+// static volatile unsigned int rx_consume2;
+// static volatile unsigned int rx_produce3;
+// static volatile unsigned int rx_consume3;
+// static volatile unsigned int rx_produce4;
+// static volatile unsigned int rx_consume4;
 
 static struct lm32_uart *uart = (struct lm32_uart *)UART0_BASE;
-static struct lm32_uart *uart2 = (struct lm32_uart *)UART2_BASE;
-static struct lm32_uart *uart3 = (struct lm32_uart *)UART3_BASE;
-static struct lm32_uart *uart4 = (struct lm32_uart *)UART4_BASE;
+// static struct lm32_uart *uart2 = (struct lm32_uart *)UART2_BASE;
+// static struct lm32_uart *uart3 = (struct lm32_uart *)UART3_BASE;
+// static struct lm32_uart *uart4 = (struct lm32_uart *)UART4_BASE;
 
 static void uart_write32(unsigned int data)
 {
@@ -41,7 +41,7 @@ static void uart_write32(unsigned int data)
     unsigned char * p = (unsigned char *)&data;
     for (i = 0; i < 4; i++)
     {
-        uart_write(1, p[i]);
+        uart_write(p[i]);
     }
 }
 
@@ -61,163 +61,59 @@ void uart_test(void)
 
 void uart_isr(void)
 {
+    //debug32("#b#\n");
     while (readb(&uart->lsr) & LM32_UART_LSR_DR)
     {
+        //debug32("#i#\n");
         rx_buf[rx_produce] = readb(&uart->rxtx);
-        //  uart1_write(rx_buf[rx_produce]);
-        //             debug32("zhongduan1\n");
         rx_produce = (rx_produce + 1) & UART_RINGBUFFER_MASK_RX;
     }
+    //debug32("#e#\n");
     irq_ack(IRQ_UART);
 }
 
-void uart2_isr(void)
-{
-    while (readb(&uart2->lsr) & LM32_UART_LSR_DR)
-    {
-        rx_buf2[rx_produce2] = readb(&uart2->rxtx);
-        //  uart1_write(rx_buf[rx_produce]);
-//                debug32("zhongduan2\n");
-        rx_produce2 = (rx_produce2 + 1) & UART_RINGBUFFER_MASK_RX;
-    }
-    irq_ack(IRQ_UART2);
-}
-
-void uart3_isr(void)
-{
-    while (readb(&uart3->lsr) & LM32_UART_LSR_DR)
-    {
-        rx_buf3[rx_produce3] = readb(&uart3->rxtx);
-        //  uart1_write(rx_buf[rx_produce]);
-        rx_produce3 = (rx_produce3 + 1) & UART_RINGBUFFER_MASK_RX;
-    }
-    irq_ack(IRQ_UART3);
-}
-
-void uart4_isr(void)
-{
-    while (readb(&uart4->lsr) & LM32_UART_LSR_DR)
-    {
-        rx_buf4[rx_produce4] = readb(&uart4->rxtx);
-        //  uart1_write(rx_buf[rx_produce]);
-        rx_produce4 = (rx_produce4 + 1) & UART_RINGBUFFER_MASK_RX;
-    }
-    irq_ack(IRQ_UART4);
-}
-
 /* Do not use in interrupt handlers! */
-char uart_read(char board)
+char uart_read()
 {
     char c = 0;
-    if (board == 1)
-    {
-        while (rx_consume == rx_produce);
-        c = rx_buf[rx_consume];
-        rx_consume = (rx_consume + 1) & UART_RINGBUFFER_MASK_RX;
-    }
-
-    if (board == 2)
-    {
-        while (rx_consume2 == rx_produce2);
-        c = rx_buf2[rx_consume2];
-        rx_consume2 = (rx_consume2 + 1) & UART_RINGBUFFER_MASK_RX;
-    }
-
-    if (board == 3)
-    {
-        while (rx_consume3 == rx_produce3);
-        c = rx_buf3[rx_consume3];
-        rx_consume3 = (rx_consume3 + 1) & UART_RINGBUFFER_MASK_RX;
-    }
-
-    if (board == 4)
-    {
-        while (rx_consume4 == rx_produce4);
-        c = rx_buf4[rx_consume4];
-        rx_consume4 = (rx_consume4 + 1) & UART_RINGBUFFER_MASK_RX;
-    }
+    while (rx_consume == rx_produce);
+    c = rx_buf[rx_consume];
+    rx_consume = (rx_consume + 1) & UART_RINGBUFFER_MASK_RX;
     return c;
 }
 
 int uart_read_nonblock(void)
 {
-    return (rx_consume != rx_produce);
+    return (rx_produce - rx_consume) & UART_RINGBUFFER_MASK_RX;
 }
 
-void uart_write(char board, char c)
+void uart_write(char c)
 {
     unsigned int oldmask;
-
-
     oldmask = irq_getmask();
     irq_setmask(0);
-
-    if (board == 1)
-    {
-        while (!(readb(&uart->lsr) & (LM32_UART_LSR_THRR | LM32_UART_LSR_TEMT)));
-        writeb(0xef & LM32_UART_LCR_8BIT, &uart->lcr);
-        writeb(c, &uart->rxtx);
-    }
-
-    if (board == 2)
-    {
-        while (!(readb(&uart2->lsr) & (LM32_UART_LSR_THRR | LM32_UART_LSR_TEMT)));
-        writeb(0xef & LM32_UART_LCR_8BIT, &uart2->lcr);
-        writeb(c, &uart2->rxtx);
-    }
-
-    if (board == 3)
-    {
-        while (!(readb(&uart3->lsr) & (LM32_UART_LSR_THRR | LM32_UART_LSR_TEMT)));
-        writeb(0xef & LM32_UART_LCR_8BIT, &uart3->lcr);
-        writeb(c, &uart3->rxtx);
-    }
-
-    if (board == 4)
-    {
-        while (!(readb(&uart4->lsr) & (LM32_UART_LSR_THRR | LM32_UART_LSR_TEMT)));
-        writeb(0xef & LM32_UART_LCR_8BIT, &uart4->lcr);
-        writeb(c, &uart4->rxtx);
-    }
+   
+    while (!(readb(&uart->lsr) & LM32_UART_LSR_THRR));
+    while (!(readb(&uart->lsr) & LM32_UART_LSR_TEMT));
+    writeb(0xef & LM32_UART_LCR_8BIT, &uart->lcr);
+    writeb(c, &uart->rxtx);
+    
     irq_setmask(oldmask);
 }
 
-void uart_writecmd(char board , char c)
+void uart_writecmd(char c, char dtime)
 {
     unsigned int oldmask;
 
     oldmask = irq_getmask();
     irq_setmask(0);
 
-    if (board == 1)
-    {
-//        debug32("(readb(&uart->lsr)=%0x\n",readb(&uart->lsr));
-        while (!(readb(&uart->lsr) & (LM32_UART_LSR_THRR | LM32_UART_LSR_TEMT)));
-        writeb(LM32_UART_LCR_8BIT, &uart->lcr);
-        writeb(c, &uart->rxtx);
-    }
-
-    if (board == 2)
-    {
-//       debug32("(readb(&uart2->lsr)=%0x\n",readb(&uart2->lsr));
-        while (!(readb(&uart2->lsr) & (LM32_UART_LSR_THRR | LM32_UART_LSR_TEMT)));
-        writeb(LM32_UART_LCR_8BIT, &uart2->lcr);
-        writeb(c, &uart2->rxtx);
-    }
-
-    if (board == 3)
-    {
-        while (!(readb(&uart3->lsr) & (LM32_UART_LSR_THRR | LM32_UART_LSR_TEMT)));
-        writeb(LM32_UART_LCR_8BIT, &uart3->lcr);
-        writeb(c, &uart3->rxtx);
-    }
-
-    if (board == 4)
-    {
-        while (!(readb(&uart4->lsr) & (LM32_UART_LSR_THRR | LM32_UART_LSR_TEMT)));
-        writeb(LM32_UART_LCR_8BIT, &uart4->lcr);
-        writeb(c, &uart4->rxtx);
-    }
+    while (!(readb(&uart->lsr) & LM32_UART_LSR_THRR));
+    while (!(readb(&uart->lsr) & LM32_UART_LSR_TEMT));
+    writeb(LM32_UART_LCR_8BIT, &uart->lcr);
+    writeb(c, &uart->rxtx);
+  
+    delay(dtime);
     irq_setmask(oldmask);
 }
 
@@ -251,108 +147,20 @@ void uart_init(void)
 
 }
 
-void uart2_init(void)
-{
-    uint32_t mask;
-    uint8_t value;
-
-    rx_produce2 = 0;
-    rx_consume2 = 0;
-
-    irq_ack(IRQ_UART2);
-
-    /* enable UART interrupts */
-    writeb(LM32_UART_IER_RBRI, &uart2->ier);
-    mask = irq_getmask();
-    debug32("mask=%0x\n", mask);
-    mask |= IRQ_UART2;
-    debug32("mask=%0x\n", mask);
-    irq_setmask(mask);
-
-    /* Line control 8 bit, 1 stop, no parity */
-    writeb(LM32_UART_LCR_8BIT, &uart2->lcr);
-
-    /* Modem control, DTR = 1, RTS = 1 */
-    writeb(LM32_UART_MCR_DTR | LM32_UART_MCR_RTS, &uart2->mcr);
-
-    /* Set baud rate */
-    value = (CPU_FREQUENCY / UART_BAUD_RATE) & 0xff;
-    writeb(value, &uart2->divl);
-    value = (CPU_FREQUENCY / UART_BAUD_RATE) >> 8;
-    writeb(value, &uart2->divh);
-}
-
-void uart3_init(void)
-{
-    uint32_t mask;
-    uint8_t value;
-
-    rx_produce3 = 0;
-    rx_consume3 = 0;
-
-    irq_ack(IRQ_UART3);
-
-    /* enable UART interrupts */
-    writeb(LM32_UART_IER_RBRI, &uart3->ier);
-    mask = irq_getmask();
-    mask |= IRQ_UART3;
-    irq_setmask(mask);
-
-    /* Line control 8 bit, 1 stop, no parity */
-    writeb(LM32_UART_LCR_8BIT, &uart3->lcr);
-
-    /* Modem control, DTR = 1, RTS = 1 */
-    writeb(LM32_UART_MCR_DTR | LM32_UART_MCR_RTS, &uart3->mcr);
-
-    /* Set baud rate */
-    value = (CPU_FREQUENCY / UART_BAUD_RATE) & 0xff;
-    writeb(value, &uart3->divl);
-    value = (CPU_FREQUENCY / UART_BAUD_RATE) >> 8;
-    writeb(value, &uart3->divh);
-}
-
-void uart4_init(void)
-{
-    uint32_t mask;
-    uint8_t value;
-
-    rx_produce4 = 0;
-    rx_consume4 = 0;
-    irq_ack(IRQ_UART4);
-
-    /* enable UART interrupts */
-    writeb(LM32_UART_IER_RBRI, &uart4->ier);
-    mask = irq_getmask();
-    mask |= IRQ_UART4;
-    irq_setmask(mask);
-
-    /* Line control 8 bit, 1 stop, no parity */
-    writeb(LM32_UART_LCR_8BIT, &uart4->lcr);
-
-    /* Modem control, DTR = 1, RTS = 1 */
-    writeb(LM32_UART_MCR_DTR | LM32_UART_MCR_RTS, &uart4->mcr);
-
-    /* Set baud rate */
-    value = (CPU_FREQUENCY / UART_BAUD_RATE) & 0xff;
-    writeb(value, &uart4->divl);
-    value = (CPU_FREQUENCY / UART_BAUD_RATE) >> 8;
-    writeb(value, &uart4->divh);
-}
-
 void uart_puts(const char *s)
 {
     while (*s)
     {
         if (*s == '\n')
-            uart_write(1, '\r');
-        uart_write(1, *s++);
+            uart_write('\r');
+        uart_write(*s++);
     }
 }
 
 void uart_nwrite(const char *s, unsigned int l)
 {
     while (l--)
-        uart_write(1, *s++);
+        uart_write(*s++);
 }
 
 
@@ -390,9 +198,9 @@ void uart1_init(void)
     writeb(LM32_UART_MCR_DTR | LM32_UART_MCR_RTS, &uart1->mcr);
 
     /* Set baud rate */
-    value = (CPU_FREQUENCY / UART_BAUD_RATE) & 0xff;
+    value = (CPU_FREQUENCY / UART_DBG_BAUD_RATE) & 0xff;
     writeb(value, &uart1->divl);
-    value = (CPU_FREQUENCY / UART_BAUD_RATE) >> 8;
+    value = (CPU_FREQUENCY / UART_DBG_BAUD_RATE) >> 8;
     writeb(value, &uart1->divh);
 }
 
@@ -417,27 +225,17 @@ void uart1_writecmd(char c)
 void uart1_write(char c)
 {
     unsigned int oldmask;
-    int i = 0;
 
     oldmask = irq_getmask();
     irq_setmask(0);
 
     if (c == '\n')
         uart1_write('\r');
-//      writeb((0xef&LM32_UART_LCR_8BIT), &uart1->lcr);
-    //   writeb(0xef&LM32_UART_LCR_8BIT, &uart1->rxtx);
-    //  writeb(uart1->lcr, &uart1->rxtx);
+        
     while (!(readb(&uart1->lsr) & (LM32_UART_LSR_THRR | LM32_UART_LSR_TEMT)))
         ;
     writeb(0xef & LM32_UART_LCR_8BIT, &uart1->lcr);
-    while (i < 1000)
-    {
-        i++;
-    }
-    i = 0;
-    // writeb(uart1->lcr, &uart1->rxtx);
     writeb(c, &uart1->rxtx);
-    //    writeb(LM32_UART_LCR_8BIT, &uart1->lcr);
     irq_setmask(oldmask);
 }
 
