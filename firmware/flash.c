@@ -30,26 +30,27 @@ uint8  flash_IINCHIP_SpiSendData(uint8 dat)
 
 void  config_reset(void)
 {
-    debug32("readl(&tim->gpio)_1=%0x\n",readl(&tim->gpio));
-    if((readl(&tim->gpio)&0x08000000)==0) 
-    {  timer_set(0,3); 
-    debug32("readl(&tim->gpio)_2=%0x\n",readl(&tim->gpio));
-       while(1)
-       { 
-          if((readl(&tim->gpio)&0x08000000)==0x08000000) break;
-       } 
-    debug32("readl(&tim->gpio)_3=%0x\n",readl(&tim->gpio)); 
-    if(timer_read(0)==0)
-       { 
-         config_recover(); 
-       }    
-    else
-       {       
-        debug32("reset\n"); 
-        writel(tim->gpio&0xFFFFFFDF, &tim->gpio); 
-        delay(1); 
-        writel(tim->gpio|0x00000020, &tim->gpio); 
-       }
+    debug32("readl(&tim->gpio)_1=%0x\n", readl(&tim->gpio));
+    if ((readl(&tim->gpio) & 0x08000000) == 0)
+    {
+        timer_set(0, 3);
+        debug32("readl(&tim->gpio)_2=%0x\n", readl(&tim->gpio));
+        while (1)
+        {
+            if ((readl(&tim->gpio) & 0x08000000) == 0x08000000) break;
+        }
+        debug32("readl(&tim->gpio)_3=%0x\n", readl(&tim->gpio));
+        if (timer_read(0) == 0)
+        {
+            config_recover();
+        }
+        else
+        {
+            debug32("reset\n");
+            writel(tim->gpio & 0xFFFFFFDF, &tim->gpio);
+            delay(1);
+            writel(tim->gpio | 0x00000020, &tim->gpio);
+        }
     }
     return;
 }
@@ -263,9 +264,9 @@ void SPI_Flash_Wait_Busy(void)
 
 void flash_init(void)
 {
-    uint8 buf[sizeof(struct config)]= {192,168,0,1,55,55,55,55,55,55,55,55,55,55,55,55};
+    uint8 buf[sizeof(struct config)] = {192, 168, 0, 1, 55, 55, 55, 55, 55, 55, 55, 55, 55, 55, 55, 55};
     struct config *configread;
-    configread = (struct config *)buf; 
+    configread = (struct config *)buf;
     configbak_write(configread);
 }
 
