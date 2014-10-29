@@ -134,7 +134,7 @@ int32 recv_stratum()
     if (len > 0)
     {
         recv(SOCK_STRATUM, (uint8*)buffer + json_end, len); /*W5200接收来自Sever的数据*/
-        debug32("not ready to parse:%s\n", buffer);
+        //debug32("not ready to parse:%s\n", buffer);
         len += json_end;
         json_begin = json_end = 0;
         while (1)

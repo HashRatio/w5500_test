@@ -25,7 +25,6 @@
 #include "spi.h"
 #include "protocol.h"
 #include "crc.h"
-#include "be200.h"
 #include "miner.h"
 #include "hexdump.c"
 #include "utils.h"
@@ -39,6 +38,7 @@
 #include "httpd.h"
 #include "httputil.h"
 
+#include "driver-tube.h"
 
 #define MM_BUF_NUM  3
 #define IDLE_TIME   60  /* Seconds */
@@ -51,8 +51,8 @@ uint8 gw[4] = {192, 168, 2, 1}; /*定义Gateway变量*/
 uint8 dip[4] = {192, 168, 2, 116};
 uint8 DEFAULT_DNS[4] = {192, 168, 2, 1};
 uint8 RIP[4] ;
-//uint8 DOMAIN[] = "uk1.ghash.io";
-uint8 DOMAIN[] = "stratum.f2pool.com";
+uint8 DOMAIN[] = "uk1.ghash.io";
+//uint8 DOMAIN[] = "stratum.f2pool.com";
 //uint8 DOMAIN[] = "182.92.180.216";
 
 int8 g_new_stratum = 0;
@@ -93,67 +93,64 @@ uint32_t be200_send_work(struct work *w)
     uart_writecmd(C_JOB, 1);
     uart_nwrite((const char *)w->data, 49);
     last = uart_read();
-    debug32("Read in be200_send_work:0x%02x\n",last);
+    debug32("Read in be200_send_work:0x%02x\n", last);
     return 1;
 }
 
 // static int get_result(uint32 * ptr_ntime, uint32 * ptr_nonce, uint32 * ptr_nonce2)
 // {
-    // uint32_t nonce_new, mm_idx;
-    // int32_t nonce_check = NONCE_HW;
-    // int i;
-    // int8_t diff_nonce[] = {0, -1, 1, -2, 2, -3, 3, 4, -4};
-    
-    // int32 data_to_read;
-    
-    // data_to_read = uart_read_nonblock();
-    
-    // while(data_to_read < 54)
-    // {
-        // data_to_read = uart_read_nonblock();
-        
-    // }
-    // for (i = 0; i < 54; i++)
-    // {
-        
-        // result[i] = uart_read();
-    // }
+// uint32_t nonce_new, mm_idx;
+// int32_t nonce_check = NONCE_HW;
+// int i;
+// int8_t diff_nonce[] = {0, -1, 1, -2, 2, -3, 3, 4, -4};
 
-    // *ptr_ntime = (((uint32_t)result[36] << 24)  |
-                  // ((uint32_t)result[37] << 16)  |
-                  // ((uint32_t)result[38] << 8)  |
-                  // ((uint32_t)result[39])) ;
+// int32 data_to_read;
 
-    // *ptr_nonce2 = (((uint32_t)result[44] << 24)  |
-                   // ((uint32_t)result[45] << 16)  |
-                   // ((uint32_t)result[46] << 8)  |
-                   // ((uint32_t)result[47])) ;
+// data_to_read = uart_read_nonblock();
 
-    // *ptr_nonce = (((uint32_t)result[51] << 24)  |
-                  // ((uint32_t)result[50] << 16)  |
-                  // ((uint32_t)result[49] << 8)  |
-                  // ((uint32_t)result[48])) + 1;
+// while(data_to_read < 54)
+// {
+// data_to_read = uart_read_nonblock();
 
-    // mm_idx = result[52];
+// }
+// for (i = 0; i < 54; i++)
+// {
 
-    // for (i = 0; i < sizeof(diff_nonce) / sizeof(diff_nonce[0]); i++)
-    // {
-        // nonce_new = *ptr_nonce + diff_nonce[i];
-        // nonce_check = test_nonce(mm_work_ptr, result, *ptr_nonce2, nonce_new);       //打印test 是这一段函数
-        // if (nonce_check != NONCE_HW)
-        // {
-            // *ptr_nonce = nonce_new;
-            // break;
-        // }
-    // }
-    // return nonce_check;
+// result[i] = uart_read();
+// }
+
+// *ptr_ntime = (((uint32_t)result[36] << 24)  |
+// ((uint32_t)result[37] << 16)  |
+// ((uint32_t)result[38] << 8)  |
+// ((uint32_t)result[39])) ;
+
+// *ptr_nonce2 = (((uint32_t)result[44] << 24)  |
+// ((uint32_t)result[45] << 16)  |
+// ((uint32_t)result[46] << 8)  |
+// ((uint32_t)result[47])) ;
+
+// *ptr_nonce = (((uint32_t)result[51] << 24)  |
+// ((uint32_t)result[50] << 16)  |
+// ((uint32_t)result[49] << 8)  |
+// ((uint32_t)result[48])) + 1;
+
+// mm_idx = result[52];
+
+// for (i = 0; i < sizeof(diff_nonce) / sizeof(diff_nonce[0]); i++)
+// {
+// nonce_new = *ptr_nonce + diff_nonce[i];
+// nonce_check = test_nonce(mm_work_ptr, result, *ptr_nonce2, nonce_new);       //打印test 是这一段函数
+// if (nonce_check != NONCE_HW)
+// {
+// *ptr_nonce = nonce_new;
+// break;
+// }
+// }
+// return nonce_check;
 // }
 
 int main(int argv, char * * argc)
 {
-    // uint32_t nonce2 = 0;
-    // int32 nonce_check;
-    // uint32 nonce_submit, nonce2_submit, ntime_submit;
     uint8 txsize[8] = {2, 2, 2, 2, 2, 2, 2, 2}; /*给每个socket配置一个2KB的发送内存*/
     uint8 rxsize[8] = {2, 2, 2, 2, 2, 2, 2, 2}; /*给每个socket配置一个2KB的接收内存*/
     irq_setmask(0);
@@ -161,10 +158,12 @@ int main(int argv, char * * argc)
     uart_init();
     uart1_init();
     debug32("Init done.\n");
+
     W5500_Init();
     setRTR(2000);//设置溢出时间值
     setRCR(3);//设置最大重新发送次数
     sysinit(txsize, rxsize);//初始化8个socket
+
     mm_work_ptr = &g_mm_works[0];
     memcpy(mm_work_ptr->target, g_diff256_target, 32);
 
@@ -176,19 +175,26 @@ int main(int argv, char * * argc)
     send_subscribe();
     send_authorize();
     g_working = 1;
-    
-    uart_writecmd(C_RES, 1);
-    uart_writecmd(C_LPO, 1);
-    uart_writecmd(C_DIF | 0x00, 1);
-    uart_writecmd(C_GCK | (uint8)29,1);
-    while (1)  // if(flag[idx]==0)
+
+    tube_reset_all();
+    tube_diff_all(0x00);
+    tube_freq_all(29);
+    int loop = 0;
+    while (1)
     {
+        loop++;
+        if (loop == 2000)
+        {
+            debug32(".");
+            loop = 0;
+        }
         //debug32("do_http()\n");
         do_http();
         //debug32("recv_stratum(&g_mm_works[0])\n");
         recv_stratum(&g_mm_works[0]);
         //debug32("tube_handler(0)\n");
         tube_handler(0);
+        //delay(10);
     } // while(1)
     return 0;
 }

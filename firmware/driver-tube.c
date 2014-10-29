@@ -1,4 +1,4 @@
-#include "be200.h"
+#include "driver-tube.h"
 #include "miner.h"
 #include "utils.h"
 #include "stratum.h"
@@ -7,11 +7,11 @@
 #include "defines.h"
 #include "pub_var.h"
 
-static uint32 nonce2 = 0; 
+static uint32 nonce2 = 0;
 static uint8 last_cmd = C_ASK;
 static uint8 last_ans = A_NO;
 
-void tube_send_work(struct work *w)
+static void tube_send_work(struct work *w)
 {
     w->data[44] = 0xff & (w->nonce2 >> 24);
     w->data[45] = 0xff & (w->nonce2 >> 16);
@@ -71,67 +71,89 @@ void tube_handler(uint8 bid)
     int32 to_read;
     int32 nonce_check;
     uint32 nonce_submit, nonce2_submit, ntime_submit;
-    
+
     //debug32("LAST_CMD:%02x  LAST_ANS:%02x\n",last_cmd,last_ans);
-    
-    if(last_cmd == C_ASK && last_ans == A_NO)
+
+    if (last_cmd == C_ASK && last_ans == A_NO)
     {
         uart_writecmd(C_ASK, 1);
         last_ans = 0;
     }
-    else if(last_cmd == C_ASK && last_ans == 0)
+    else if (last_cmd == C_ASK && last_ans == 0)
     {
-        if(uart_read_nonblock() == 0){ 
+        if (uart_read_nonblock() == 0)
+        {
             return;
         }
         //debug32("hash board response.");
         last_ans = uart_read(1);
         //debug32("0x%02x\n",last_ans);
     }
-    else if(last_cmd == C_ASK && last_ans == A_YES)//ready to read nonce
+    else if (last_cmd == C_ASK && last_ans == A_YES) //ready to read nonce
     {
         //debug32("ready to read nonce\n");
         to_read = uart_read_nonblock();
         //debug32("Data to read:%d\n",to_read);
-        if(to_read < 54){
+        if (to_read < 54)
+        {
             return;
         }
         nonce_check = tube_get_result(bid, &ntime_submit, &nonce_submit, &nonce2_submit);
         if (nonce_check == NONCE_VALID)
         {
+            //debug32("before send\n");
             send_submit(mm_work_ptr, nonce2_submit, ntime_submit, bswap_32(nonce_submit));
+            //debug32("after send\n");
             calc_hashrate();
         }
         last_cmd = C_ASK;
         last_ans = A_NO;
-        
+
     }
-    else if(last_cmd == C_ASK && last_ans == A_WAL)//send work to hash board
+    else if (last_cmd == C_ASK && last_ans == A_WAL) //send work to hash board
     {
-        if(g_new_stratum)
+        if (g_new_stratum)
         {
             //debug32("send work to hash board\n");
             miner_gen_nonce2_work(mm_work_ptr, nonce2, &g_works[0]);
             nonce2++;
-            //debug32("before send\n");
+
             tube_send_work(&g_works[0]);
-            //debug32("after send\n");
+
             g_new_stratum = 1;
         }
         last_cmd = C_JOB;
         last_ans = A_NO;
     }
-    else if(last_cmd == C_JOB && last_ans == A_NO)//wait hash board sync work
+    else if (last_cmd == C_JOB && last_ans == A_NO) //wait hash board sync work
     {
         uart_read(1);
         last_cmd = C_ASK;
-        last_ans = A_NO; 
+        last_ans = A_NO;
     }
     else
     {
-        debug32("LAST_CMD:%02x  LAST_ANS:%02x\n",last_cmd,last_ans);
-        uart_writecmd(0,1);
+        debug32("LAST_CMD:%02x  LAST_ANS:%02x\n", last_cmd, last_ans);
+        uart_writecmd(0, 1);
         last_cmd = C_ASK;
-        last_ans = A_NO; 
+        last_ans = A_NO;
     }
+}
+
+void tube_reset_all()
+{
+    uart_writecmd(C_RES, 1);
+    //uart_writecmd(C_LPO, 1);
+}
+
+void tube_freq_all(uint8 freq)
+{
+    uart_writecmd(C_GCK | ((uint8)freq & 0x1f), 1);
+    uart_writecmd(C_LPO, 1);
+}
+
+void tube_diff_all(uint8 diff)
+{
+    uart_writecmd(C_DIF | (diff & 0x0f), 1);
+    //uart_writecmd(C_LPO, 1);
 }
