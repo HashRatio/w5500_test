@@ -20,8 +20,8 @@
 #define ENABLE_LED 1
 
 #define CPU_FREQUENCY       (100 * 1000 * 1000) /* 50Mhz */
-#define UART_BAUD_RATE          (115200)
-
+#define UART_BAUD_RATE          (460800)
+#define UART_DBG_BAUD_RATE          (115200)
 /* Interrupt
  * Define at last few lines of verilog/superkdf9/soc/superkdf9_simple.v
  */
