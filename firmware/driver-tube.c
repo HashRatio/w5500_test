@@ -7,23 +7,31 @@
 #include "defines.h"
 #include "pub_var.h"
 
-static uint32 nonce2 = 0;
-static uint8 last_cmd = C_ASK;
-static uint8 last_ans = A_NO;
 
-static void tube_send_work(struct work *w)
+static uint8 last_ans[32];
+
+
+static void tube_send_cmd(uint8 bid, uint8 cmd)
+{
+    uart_writecmd(cmd|(bid&0x1f),1);
+}
+
+
+static void tube_send_work(uint8 bid, struct work *w)
 {
     w->data[44] = 0xff & (w->nonce2 >> 24);
     w->data[45] = 0xff & (w->nonce2 >> 16);
     w->data[46] = 0xff & (w->nonce2 >> 8);
     w->data[47] = 0xff & (w->nonce2);
     w->data[48] = w->mm_idx;
-    uart_writecmd(C_JOB, 1);
+    tube_send_cmd(bid, C_JOB);
     uart_nwrite((const char *)w->data, 49);
+    uart_read();
     return;
 }
 
-static int tube_get_result(int32 board, uint32 * ptr_ntime, uint32 * ptr_nonce, uint32 * ptr_nonce2)
+
+static int tube_get_result(uint32 * ptr_ntime, uint32 * ptr_nonce, uint32 * ptr_nonce2)
 {
     static int8 result[54];
     uint32 nonce_new, mm_idx;
@@ -33,7 +41,7 @@ static int tube_get_result(int32 board, uint32 * ptr_ntime, uint32 * ptr_nonce, 
 
     for (i = 0; i < 54; i++)
     {
-        result[i] = uart_read(1);
+        result[i] = uart_read();
     }
 
     *ptr_ntime = (((uint32_t)result[36] << 24)  |
@@ -66,39 +74,57 @@ static int tube_get_result(int32 board, uint32 * ptr_ntime, uint32 * ptr_nonce, 
     return nonce_check;
 }
 
-void tube_handler(uint8 bid)
+
+static uint8 tube_ask_status(uint8 bid)
 {
-    int32 to_read;
+    tube_send_cmd(bid, C_ASK);
+    return uart_read();
+}
+
+
+void tube_discover()
+{
+    int bid;
+    for(bid = 0;bid < sizeof(last_ans);bid++)
+    {
+        last_ans[bid] = A_NO;
+        tube_send_cmd(bid,C_ASK);
+        delay(1);
+        if(!uart_read_nonblock())
+            last_ans[bid] = 0xFF;
+        else
+            last_ans[bid] = uart_read();
+        debug32("%02x ",last_ans[bid]);
+    }
+    debug32("\n");
+}
+
+
+void tube_init()
+{
+    tube_reset_all();
+    tube_diff_all(0x00);
+    tube_freq_all(29);
+    delay(5000);
+    tube_discover();
+}
+
+
+void tube_handler_single(uint8 bid)
+{
+    static int32 nonce2;
     int32 nonce_check;
     uint32 nonce_submit, nonce2_submit, ntime_submit;
-
-    //debug32("LAST_CMD:%02x  LAST_ANS:%02x\n",last_cmd,last_ans);
-
-    if (last_cmd == C_ASK && last_ans == A_NO)
+    
+    last_ans[bid] = tube_ask_status(bid);
+    
+    if(last_ans[bid] == A_NO)
     {
-        uart_writecmd(C_ASK, 1);
-        last_ans = 0;
+        return;
     }
-    else if (last_cmd == C_ASK && last_ans == 0)
-    {
-        if (uart_read_nonblock() == 0)
-        {
-            return;
-        }
-        //debug32("hash board response.");
-        last_ans = uart_read(1);
-        //debug32("0x%02x\n",last_ans);
-    }
-    else if (last_cmd == C_ASK && last_ans == A_YES) //ready to read nonce
-    {
-        //debug32("ready to read nonce\n");
-        to_read = uart_read_nonblock();
-        //debug32("Data to read:%d\n",to_read);
-        if (to_read < 54)
-        {
-            return;
-        }
-        nonce_check = tube_get_result(bid, &ntime_submit, &nonce_submit, &nonce2_submit);
+    else if(last_ans[bid] == A_YES)
+    {        
+        nonce_check = tube_get_result(&ntime_submit, &nonce_submit, &nonce2_submit);
         if (nonce_check == NONCE_VALID)
         {
             //debug32("before send\n");
@@ -106,45 +132,41 @@ void tube_handler(uint8 bid)
             //debug32("after send\n");
             calc_hashrate();
         }
-        last_cmd = C_ASK;
-        last_ans = A_NO;
-
     }
-    else if (last_cmd == C_ASK && last_ans == A_WAL) //send work to hash board
+    else if(last_ans[bid] == A_WAL)
     {
         if (g_new_stratum)
         {
             //debug32("send work to hash board\n");
             miner_gen_nonce2_work(mm_work_ptr, nonce2, &g_works[0]);
             nonce2++;
-
-            tube_send_work(&g_works[0]);
-
+            tube_send_work(bid, &g_works[0]);
             g_new_stratum = 1;
         }
-        last_cmd = C_JOB;
-        last_ans = A_NO;
-    }
-    else if (last_cmd == C_JOB && last_ans == A_NO) //wait hash board sync work
-    {
-        uart_read(1);
-        last_cmd = C_ASK;
-        last_ans = A_NO;
     }
     else
     {
-        debug32("LAST_CMD:%02x  LAST_ANS:%02x\n", last_cmd, last_ans);
-        uart_writecmd(0, 1);
-        last_cmd = C_ASK;
-        last_ans = A_NO;
+        debug32("Protocol error!\n");
     }
 }
+
+
+void tube_handler()
+{
+    int bid;
+    for(bid = 0; bid < sizeof(last_ans); bid++)
+    {
+        if(last_ans[bid] != 0xFF)
+            tube_handler_single(bid);
+    }
+}
+
 
 void tube_reset_all()
 {
     uart_writecmd(C_RES, 1);
-    //uart_writecmd(C_LPO, 1);
 }
+
 
 void tube_freq_all(uint8 freq)
 {
@@ -152,8 +174,8 @@ void tube_freq_all(uint8 freq)
     uart_writecmd(C_LPO, 1);
 }
 
+
 void tube_diff_all(uint8 diff)
 {
     uart_writecmd(C_DIF | (diff & 0x0f), 1);
-    //uart_writecmd(C_LPO, 1);
 }

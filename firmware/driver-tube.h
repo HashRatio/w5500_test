@@ -32,9 +32,10 @@
 #define R_JOB 0
 #define R_ASK 1
 #define R_CLK 0
-
+void tube_init();
 void tube_reboot_all();
-void tube_handler(uint8 bid);
+void tube_handler();
+void tube_discover();
 void tube_reset_all();
 void tube_freq_all(uint8 freq);
 void tube_diff_all(uint8 diff);

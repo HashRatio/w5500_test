@@ -22,6 +22,40 @@ const int8 PAGE_HEADER[] SECTION_TEXT = "\
 
 const int8 PAGE_TESTSTATUS[] SECTION_TEXT = "\
 <h2>TestStatus</h2>\
+<b><font size=2 color=white>\
+<br>01: |OOO|OOO|OOO|OOO|OOO|OOO|OOO|OOO| \
+<br>01: |OOO|OOO|OOO|OOO|OOO|OOO|OOO|OOO| \
+<br>01: |OOO|OOO|OOO|OOO|OOO|OOO|OOO|OOO| \
+<br>01: |OOO|OOO|OOO|OOO|OOO|OOO|OOO|OOO| \
+<br>01: |OOO|OOO|OOO|OOO|OOO|OOO|OOO|OOO| \
+<br>01: |OOO|OOO|OOO|OOO|OOO|OOO|OOO|OOO| \
+<br>01: |OOO|OOO|OOO|OOO|OOO|OOO|OOO|OOO| \
+<br>01: |OOO|OOO|OOO|OOO|OOO|OOO|OOO|OOO| \
+<br>01: |OOO|OOO|OOO|OOO|OOO|OOO|OOO|OOO| \
+<br>01: |OOO|OOO|OOO|OOO|OOO|OOO|OOO|OOO| \
+<br>01: |OOO|OOO|OOO|OOO|OOO|OOO|OOO|OOO| \
+<br>01: |OOO|OOO|OOO|OOO|OOO|OOO|OOO|OOO| \
+<br>01: |OOO|OOO|OOO|OOO|OOO|OOO|OOO|OOO| \
+<br>01: |OOO|OOO|OOO|OOO|OOO|OOO|OOO|OOO| \
+<br>01: |OOO|OOO|OOO|OOO|OOO|OOO|OOO|OOO| \
+<br>01: |OOO|OOO|OOO|OOO|OOO|OOO|OOO|OOO| \
+<br>01: |OOO|OOO|OOO|OOO|OOO|OOO|OOO|OOO| \
+<br>01: |OOO|OOO|OOO|OOO|OOO|OOO|OOO|OOO| \
+<br>01: |OOO|OOO|OOO|OOO|OOO|OOO|OOO|OOO| \
+<br>01: |OOO|OOO|OOO|OOO|OOO|OOO|OOO|OOO| \
+<br>01: |OOO|OOO|OOO|OOO|OOO|OOO|OOO|OOO| \
+<br>01: |OOO|OOO|OOO|OOO|OOO|OOO|OOO|OOO| \
+<br>01: |OOO|OOO|OOO|OOO|OOO|OOO|OOO|OOO| \
+<br>01: |OOO|OOO|OOO|OOO|OOO|OOO|OOO|OOO| \
+<br>01: |OOO|OOO|OOO|OOO|OOO|OOO|OOO|OOO| \
+<br>01: |OOO|OOO|OOO|OOO|OOO|OOO|OOO|OOO| \
+<br>01: |OOO|OOO|OOO|OOO|OOO|OOO|OOO|OOO| \
+<br>01: |OOO|OOO|OOO|OOO|OOO|OOO|OOO|OOO| \
+<br>01: |OOO|OOO|OOO|OOO|OOO|OOO|OOO|OOO| \
+<br>01: |OOO|OOO|OOO|OOO|OOO|OOO|OOO|OOO| \
+<br>01: |OOO|OOO|OOO|OOO|OOO|OOO|OOO|OOO| \
+<br>01: |OOO|OOO|OOO|OOO|OOO|OOO|OOO|OOO| \
+<br><br>\
 </body></html>";
 
 const int8 PAGE_STATISTICS[] SECTION_TEXT = "\
@@ -113,7 +147,7 @@ static void make_response(const int8 * content)
     int16 content_len = 0;
     int8 tail[10];
 
-    content_len = strlen(PAGE_HEADER) + strlen(content);
+    content_len = strlen(PAGE_HEADER) + strlen(content) + strlen(content);
 
     memcpy(tx_buf, RESPONSE_HEADER, strlen(RESPONSE_HEADER));
     offset = strlen(RESPONSE_HEADER);
@@ -173,6 +207,9 @@ void proc_http(SOCKET s, uint8 * buf)
             memset(tx_buf, 0, MAX_TX_URI_SIZE);
             make_response(PAGE_TESTSTATUS);
             debug32("%d\n", strlen(tx_buf));
+            send(s, (uint8 *)tx_buf, strlen((char const*)tx_buf), 0);
+            memset(tx_buf, MAX_TX_URI_SIZE,0);
+            memcpy(tx_buf, PAGE_TESTSTATUS,strlen(PAGE_TESTSTATUS));
             send(s, (uint8 *)tx_buf, strlen((char const*)tx_buf), 0);
         }
         else if (strcmp(name, URL_MINING) == 0)
