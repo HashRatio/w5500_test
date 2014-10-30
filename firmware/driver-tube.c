@@ -109,6 +109,48 @@ void tube_init()
     tube_discover();
 }
 
+void tube_status_single(int32 bid)
+{
+    uint8 i,temp;
+    tube_send_cmd(bid, C_TRS);
+    board_status[bid] = 0;
+    uint32 upper,lower;
+    for(i = 0; i < 67; i++)
+    { 
+        temp = uart_read();
+        if(i >=0 && i< 24)
+        {
+            if(temp & 0xF0)        //Error
+            {
+                board_status[bid] |= STATUS_ERR >> (i<<1); 
+            }
+            else if(temp & 0x0F)    //Pwr
+            {
+                board_status[bid] |= STATUS_PWR >> (i<<1); 
+            }
+        }
+        if(i == 66)
+            board_version[bid] = temp;
+    }
+    // upper =  board_status[bid] >> 32;
+    // lower =  board_status[bid];
+    // debug32("bid:%d status:%08x%08x version:%02x\n",bid,upper,lower,board_version[bid]);
+}
+
+void tube_status()
+{
+    int32 bid;
+    for(bid = 0; bid < sizeof(last_ans); bid++)
+    {
+        if(last_ans[bid] == 0xFF)
+            continue;
+        else
+        {
+            tube_status_single(bid);
+        }
+    }
+}
+
 
 void tube_handler_single(uint8 bid)
 {

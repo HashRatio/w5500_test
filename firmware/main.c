@@ -122,9 +122,13 @@ int main(int argv, char * * argc)
     while (1)
     {
         loop++;
-        if (loop == 500)
+        if (loop%500 == 0)
         {
             debug32(".");
+        }
+        if (loop%1000 == 0)
+        {
+            tube_status();
             loop = 0;
         }
         do_http();

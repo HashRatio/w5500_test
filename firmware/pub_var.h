@@ -19,4 +19,7 @@ extern uint8 g_worker_name[50];
 extern uint8 g_worker_pwd[10];
 extern const uint8 g_diff1_target[32];
 extern const uint8 g_diff256_target[32];
+
+extern uint64 board_status[32];
+extern uint8 board_version[32];
 #endif
