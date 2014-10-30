@@ -114,7 +114,7 @@ void tube_status_single(int32 bid)
     uint8 i,temp;
     tube_send_cmd(bid, C_TRS);
     board_status[bid] = 0;
-    uint32 upper,lower;
+    //uint32 upper,lower;
     for(i = 0; i < 67; i++)
     { 
         temp = uart_read();
