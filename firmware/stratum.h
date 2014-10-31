@@ -11,25 +11,17 @@
 struct config
 {
     uint8 ip[4];        /* The miner ID */
-    uint8 mac1[6];
-    uint8 mac2[6];
     uint8 mask[4];      /* Same with work task_id */
     uint8 gateway[4];
-    uint16 webport;
-    uint16 sysport;
     uint8 pdns[4];
     uint8 sdns[4];
     uint8 poolip1[32];     /* The miner ID */
-    uint16 poolport1;   /* Same with work task_id */
     uint8 username1[20];
     uint8 password1[16];
-//        uint8 poolip2[32];     /* The miner ID */
-//        uint16 poolport2;   /* Same with work task_id */
-//        uint8 username2[20];
-//        uint8 password2[16];
+    uint8 poolip2[32];     /* The miner ID */
+    uint8 username2[20];
+    uint8 password2[16];
     uint8 sysclk[2];
-//        uint8 rollntime[2];
-//        uint8 wakeipperiod[2];
 };
 
 extern int32 authorize_id;

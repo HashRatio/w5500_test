@@ -33,9 +33,21 @@
 #define R_ASK 1
 #define R_CLK 0
 
+#define STATUS_OK  ((uint64)0x0000000000000003)    // Chip works well
+#define STATUS_ERR ((uint64)0x0000000000000001)    // Chip not found
+#define STATUS_PWR ((uint64)0x0000000000000002)    // Chip status error, has been powered down.
+
+void tube_init();
 void tube_reboot_all();
-void tube_handler(uint8 bid);
+void tube_handler(void(* func)(void));
+void tube_discover();
+void tube_status();
 void tube_reset_all();
 void tube_freq_all(uint8 freq);
 void tube_diff_all(uint8 diff);
+uint32 tube_get_hashrate(uint8 bid);
+uint32 tube_total_hashrate();
+int8 tube_board_count();
+uint8 tube_get_freq();
+uint16 tube_chip_count(uint8 bid,uint64 status);
 #endif

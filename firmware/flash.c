@@ -30,11 +30,11 @@ uint8  flash_IINCHIP_SpiSendData(uint8 dat)
 
 void  config_reset(void)
 {
-    debug32("readl(&tim->gpio)_1=%0x\n", readl(&tim->gpio));
+//    debug32("readl(&tim->gpio)_1=%0x\n", readl(&tim->gpio));
     if ((readl(&tim->gpio) & 0x08000000) == 0)
     {
         timer_set(0, 3);
-        debug32("readl(&tim->gpio)_2=%0x\n", readl(&tim->gpio));
+//        debug32("readl(&tim->gpio)_2=%0x\n", readl(&tim->gpio));
         while (1)
         {
             if ((readl(&tim->gpio) & 0x08000000) == 0x08000000) break;
@@ -55,49 +55,6 @@ void  config_reset(void)
     return;
 }
 
-/*
-@brief  This function writes the data into W5200 registers.
-
-uint8 flash_INCHIP_WRITE(uint16 addr,uint8 data)
-{
-    //IINCHIP_ISR_DISABLE();                      // Interrupt Service Routine Disable
-
-        //SPI MODE I/F
-        flash_INCHIP_CSoff();                            // CS=0, SPI start
-
-        flash_IINCHIP_SpiSendData(WRITE_INSTRUCTION);
-        flash_IINCHIP_SpiSendData((addr & 0x0700) >> 8);  // Address byte 1
-        flash_IINCHIP_SpiSendData(addr & 0x00FF);         // Address byte 2
-        flash_IINCHIP_SpiSendData(((addr&0xF800) >> 8)|FDM1|RWB_WRITE);        // Data write command and Write data length 1
-        flash_IINCHIP_SpiSendData(data);                  // Data write (write 1byte data)
-
-        flash_IINCHIP_CSon();                             // CS=1,  SPI end
-
-//        flash_IINCHIP_ISR_ENABLE();                       // Interrupt Service Routine Enable
-        return 1;
-}
-*/
-//@brief  This function reads the value from W5200 registers.
-/*
-uint8 flash_IINCHIP_READ(uint16 addr)
-{
-        uint8 data;
-
-//        flash_IINCHIP_ISR_DISABLE();                       // Interrupt Service Routine Disable
-
-        flash_IINCHIP_CSoff();                             // CS=0, SPI start
-
-        flash_IINCHIP_SpiSendData((addr & 0x0700) >> 8);   // Address byte 1
-        flash_IINCHIP_SpiSendData(addr & 0x00FF);          // Address byte 2
-        flash_IINCHIP_SpiSendData(((addr & 0xF800) >> 8)|FDM1|RWB_READ);                    // Data read command and Read data length 1
-        data = flash_IINCHIP_SpiSendData(0x00);                   // Read data
-
-        flash_IINCHIP_CSon();                              // CS=1,  SPI end
-
-//        flash_IINCHIP_ISR_ENABLE();                        // Interrupt Service Routine Enable
-        return data;
-}
-*/
 uint8 SPI_Flash_ReadSR(void)
 {
     uint8 byte = 0;
@@ -264,7 +221,7 @@ void SPI_Flash_Wait_Busy(void)
 
 void flash_init(void)
 {
-    uint8 buf[sizeof(struct config)] = {192, 168, 0, 1, 55, 55, 55, 55, 55, 55, 55, 55, 55, 55, 55, 55};
+    uint8 buf[sizeof(struct config)] = {192, 168, 0, 1,192,168,0,2};
     struct config *configread;
     configread = (struct config *)buf;
     configbak_write(configread);

@@ -65,7 +65,6 @@ int32 test_nonce(struct mm_work *mw, char *result, uint32 nonce2, uint32 nonce);
 
 int32 test_nonce(struct mm_work *mw, char * result, uint32 nonce2, uint32 nonce);
 void reset_hashrate();
-int32 calc_hashrate();
 void set_asic_freq(uint32 value);
 uint32 get_asic_freq();
 

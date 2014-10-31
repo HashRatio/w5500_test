@@ -67,38 +67,33 @@ static volatile unsigned int ret_consume = 0;
 static volatile unsigned int be200_ret_produce = 0;
 static volatile unsigned int be200_ret_consume = 0;
 
-//int buffer_test[1024] __attribute__((section(".bufdata")));
 
-//int8 buffer[BUFFER_SIZE];/*定义一个2KB的缓存*
-
-//uint8 b[0x2000] = {0x55};
-
-void W5500_Init(void)
+void w5500_init(void)
 {
+    uint8 txsize[8] = {2, 2, 2, 2, 2, 2, 2, 2}; /*给每个socket配置一个2KB的发送内存*/
+    uint8 rxsize[8] = {2, 2, 2, 2, 2, 2, 2, 2}; /*给每个socket配置一个2KB的接收内存*/
+    
     iinchip_hw_init();
     setSHAR(mac);/*配置Mac地址*/
     setSIPR(ip);/*配置Ip地址*/
     setSUBR(sn);/*配置子网掩码*/
     setGAR(gw);/*配置默认网关*/
+    
+    setRTR(2000);//设置溢出时间值
+    setRCR(3);//设置最大重新发送次数
+    sysinit(txsize, rxsize);//初始化8个socket
 }
 
-uint32_t be200_send_work(struct work *w)
+void lm32_init()
 {
-    uint8_t last = 0;
-    w->data[44] = 0xff & (w->nonce2 >> 24);
-    w->data[45] = 0xff & (w->nonce2 >> 16);
-    w->data[46] = 0xff & (w->nonce2 >> 8);
-    w->data[47] = 0xff & (w->nonce2);
-    w->data[48] = w->mm_idx;
-    uart_writecmd(C_JOB, 1);
-    uart_nwrite((const char *)w->data, 49);
-    last = uart_read();
-    debug32("Read in be200_send_work:0x%02x\n", last);
-    return 1;
+    irq_setmask(0);
+    irq_enable(1);
+    uart_init();
+    uart1_init();
+    debug32("Init done.\n"); 
 }
 
-// static int get_result(uint32 * ptr_ntime, uint32 * ptr_nonce, uint32 * ptr_nonce2)
-// {
+
 // uint32_t nonce_new, mm_idx;
 // int32_t nonce_check = NONCE_HW;
 // int i;
@@ -148,26 +143,11 @@ uint32_t be200_send_work(struct work *w)
 // }
 // return nonce_check;
 // }
-
 int main(int argv, char * * argc)
-{   uint8 c;
-    uint8 txsize[8] = {2, 2, 2, 2, 2, 2, 2, 2}; /*给每个socket配置一个2KB的发送内存*/
-    uint8 rxsize[8] = {2, 2, 2, 2, 2, 2, 2, 2}; /*给每个socket配置一个2KB的接收内存*/
-//    while(1);
-    irq_setmask(0);
-    irq_enable(1);
-    uart_init();
-    uart1_init();
-
-    uart_writecmd(C_ASK, 1);
-    c=uart_read(1);
-    debug32("c=%0x\n",c);
-
-    W5500_Init();
-    setRTR(2000);//设置溢出时间值
-    setRCR(3);//设置最大重新发送次数
-    sysinit(txsize, rxsize);//初始化8个socket
-
+{   
+    lm32_init();
+    w5500_init();
+   
     mm_work_ptr = &g_mm_works[0];
     memcpy(mm_work_ptr->target, g_diff256_target, 32);
 
@@ -180,25 +160,24 @@ int main(int argv, char * * argc)
     send_authorize();
     g_working = 1;
 
-    tube_reset_all();
-    tube_diff_all(0x00);
-    tube_freq_all(29);
+    tube_init();
     int loop = 0;
+    uint64 i = 0;
+    debug32("len:%d\n",sizeof(i));
     while (1)
     {
         loop++;
-        if (loop == 2000)
+        if (loop%500 == 0)
         {
             debug32(".");
+        }
+        if (loop%1000 == 0)
+        {
+            tube_status();
             loop = 0;
         }
-        //debug32("do_http()\n");
-        do_http();
-        //debug32("recv_stratum(&g_mm_works[0])\n");
         recv_stratum(&g_mm_works[0]);
-        //debug32("tube_handler(0)\n");
-        tube_handler(0);
-        //delay(10);
+        tube_handler(do_http);
     } // while(1)
     return 0;
 }

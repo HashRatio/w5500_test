@@ -10,6 +10,11 @@
 #include "socket.h"
 #include "sockutil.h"
 
+#define SECTION_TEXT __attribute__((section(".text")))
+
+extern char tx_buf[MAX_TX_URI_SIZE];
+extern char rx_buf[MAX_RX_URI_SIZE];
+
 void proc_http(SOCKET s, uint8 * buf);
 void do_http(void);
 void cgi_ipconfig(st_http_request *http_request);

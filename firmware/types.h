@@ -86,7 +86,8 @@ typedef unsigned int uint32;
  * The volatile 32-bit unsigned data type.
  */
 //typedef volatile unsigned long vuint32;
-
+typedef long long int64;
+typedef unsigned long long uint64;
 /* bsd */
 //typedef uint8         u_char;     /**< 8-bit value */
 typedef uint8           SOCKET;
