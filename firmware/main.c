@@ -153,11 +153,15 @@ int main(int argv, char * * argc)
 {   uint8 c;
     uint8 txsize[8] = {2, 2, 2, 2, 2, 2, 2, 2}; /*给每个socket配置一个2KB的发送内存*/
     uint8 rxsize[8] = {2, 2, 2, 2, 2, 2, 2, 2}; /*给每个socket配置一个2KB的接收内存*/
+//    while(1);
     irq_setmask(0);
     irq_enable(1);
     uart_init();
     uart1_init();
 
+    uart_writecmd(C_ASK, 1);
+    c=uart_read(1);
+    debug32("c=%0x\n",c);
 
     W5500_Init();
     setRTR(2000);//设置溢出时间值
