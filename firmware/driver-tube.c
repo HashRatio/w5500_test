@@ -7,9 +7,9 @@
 #include "defines.h"
 #include "pub_var.h"
 
-
-static uint8 last_ans[32];
-
+static uint32 board_share[32];
+static uint32 board_hashrate[32];
+static uint8 freq;
 
 static void tube_send_cmd(uint8 bid, uint8 cmd)
 {
@@ -81,6 +81,42 @@ static uint8 tube_ask_status(uint8 bid)
     return uart_read();
 }
 
+static int32 tube_calc_hashrate(uint8 bid)
+{
+    board_share[bid] += (4295 * g_diff) / 1000;
+    if (g_curr_ntime != g_last_ntime)
+        board_hashrate[bid] = board_share[bid] / (g_curr_ntime - g_last_ntime);
+    debug32("Board%02d Hashrate:%d Difficulty:%d\n", bid, board_hashrate[bid], g_diff);
+    return 0;
+}
+
+uint32 tube_get_hashrate(uint8 bid)
+{
+    return board_hashrate[bid];
+}
+
+uint32 tube_total_hashrate()
+{
+    int16 bid;
+    uint32 total_hashrate = 0;
+    for(bid = 0; bid < sizeof(last_ans); bid++)
+    {
+        total_hashrate += board_hashrate[bid];
+    }
+    return total_hashrate;
+}
+
+int8 tube_board_count()
+{
+    int8 bid;
+    int8 board_cnt = 0;
+    for(bid = 0; bid < sizeof(last_ans); bid++)
+    {
+        if(last_ans[(int32)bid] != 0xFF)
+            board_cnt++;
+    }
+    return board_cnt;
+}
 
 void tube_discover()
 {
@@ -102,9 +138,10 @@ void tube_discover()
 
 void tube_init()
 {
+    freq = 29;
     tube_reset_all();
     tube_diff_all(0x00);
-    tube_freq_all(29);
+    tube_freq_all(freq);
     delay(5000);
     tube_discover();
 }
@@ -122,11 +159,15 @@ void tube_status_single(int32 bid)
         {
             if(temp & 0xF0)        //Error
             {
-                board_status[bid] |= STATUS_ERR >> (i<<1); 
+                board_status[bid] |= STATUS_ERR << (i<<1); 
             }
             else if(temp & 0x0F)    //Pwr
             {
-                board_status[bid] |= STATUS_PWR >> (i<<1); 
+                board_status[bid] |= STATUS_PWR << (i<<1); 
+            }
+            else
+            {
+                board_status[bid] |= STATUS_OK << (i<<1); 
             }
         }
         if(i == 66)
@@ -172,7 +213,7 @@ void tube_handler_single(uint8 bid)
             //debug32("before send\n");
             send_submit(mm_work_ptr, nonce2_submit, ntime_submit, bswap_32(nonce_submit));
             //debug32("after send\n");
-            calc_hashrate();
+            tube_calc_hashrate(bid);
         }
     }
     else if(last_ans[bid] == A_WAL)
@@ -193,13 +234,16 @@ void tube_handler_single(uint8 bid)
 }
 
 
-void tube_handler()
+void tube_handler(void(* func)(void))
 {
     int bid;
     for(bid = 0; bid < sizeof(last_ans); bid++)
     {
         if(last_ans[bid] != 0xFF)
+        {
             tube_handler_single(bid);
+            func();
+        }
     }
 }
 
@@ -209,6 +253,22 @@ void tube_reset_all()
     uart_writecmd(C_RES, 1);
 }
 
+uint8 tube_get_freq()
+{
+    return freq;
+} 
+
+uint16 tube_chip_count(uint8 bid,uint64 status)
+{
+    uint16 cnt = 0;
+    uint8 i;
+    for(i = 0;i < 24; i++)
+    {   
+        if( ((board_status[bid] >> (i<<1)) & (uint64)STATUS_OK) == (uint64)status )
+            cnt++;
+    }
+    return cnt;
+}
 
 void tube_freq_all(uint8 freq)
 {

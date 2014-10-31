@@ -4,18 +4,18 @@
  * @src: Source
  * @n: The size to copy.
  */
+// void *memcpy(void *to, const void *from, unsigned int n)
+// {
+    // unsigned int i;
+    // unsigned char *xto = (unsigned char *)to;
+    // unsigned char *xfrom = (unsigned char *)from;
+    // for (i = 0; i < n; i++)
+    // {
+        // *(xto++) = *(xfrom++);
+    // }
+    // return xto;
+// }
 void *memcpy(void *to, const void *from, unsigned int n)
-{
-    unsigned int i;
-    unsigned char *xto = (unsigned char *)to;
-    unsigned char *xfrom = (unsigned char *)from;
-    for (i = 0; i < n; i++)
-    {
-        *(xto++) = *(xfrom++);
-    }
-    return xto;
-}
-/*void *memcpy(void *to, const void *from, unsigned int n)
 {
     void *xto = to;
     unsigned int temp;
@@ -82,5 +82,5 @@ void *memcpy(void *to, const void *from, unsigned int n)
         *cto = *cfrom;
     }
     return xto;
-}*/
+}
 
