@@ -126,9 +126,8 @@ int main(int argv, char * * argc)
             tube_status();
             loop = 0;
         }
-        do_http();
         recv_stratum(&g_mm_works[0]);
-        tube_handler();
+        tube_handler(do_http);
     } // while(1)
     return 0;
 }

@@ -16,9 +16,6 @@
 #undef HTTPD_INCLUDE
 
 
-extern char  homepage_default[];
-char tx_buf[MAX_TX_URI_SIZE];
-char rx_buf[MAX_RX_URI_SIZE];
 extern uint8 BUFPUB[1024];
 /**
  @brief convert escape characters(%XX) to ascii charater
